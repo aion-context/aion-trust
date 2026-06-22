@@ -1,0 +1,16 @@
+[package]
+name = "aion-trust-wallet"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The subject's wallet: identity, Trust Profile, and presentation builder."
+
+[dependencies]
+aion-trust-core.workspace = true
+aion-trust-claims.workspace = true
+aion-context.workspace = true
+serde.workspace = true
+serde_json.workspace = true

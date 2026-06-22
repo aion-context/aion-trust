@@ -113,7 +113,10 @@ mod tests {
         let mut w = SigningWriter::new(b"dom");
         w.field(b"x");
         // domain "dom" (len 3) then field "x" (len 1), each length-prefixed big-endian
-        assert_eq!(w.into_bytes(), vec![0, 0, 0, 3, b'd', b'o', b'm', 0, 0, 0, 1, b'x']);
+        assert_eq!(
+            w.into_bytes(),
+            vec![0, 0, 0, 3, b'd', b'o', b'm', 0, 0, 0, 1, b'x']
+        );
     }
 
     #[test]

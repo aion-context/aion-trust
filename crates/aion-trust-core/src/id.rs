@@ -14,11 +14,12 @@ use crate::encoding::to_hex;
 pub struct Did(String);
 
 impl Did {
-    /// Derive the did from a verifying key: `did:aion:` + the first 16 bytes of
-    /// `hash(public_key)`. Stable, collision-resistant, and reveals nothing personal.
+    /// Derive the did from a verifying key: `did:aion:` + the first 24 bytes of
+    /// `hash(public_key)`. 24 bytes gives ~96-bit collision resistance (vs. 64-bit at 16),
+    /// the trust anchor the registry keys on. Stable and reveals nothing personal.
     pub fn from_key(vk: &VerifyingKey) -> Self {
         let h = crypto::hash(&vk.to_bytes());
-        Did(format!("did:aion:{}", to_hex(&h[..16])))
+        Did(format!("did:aion:{}", to_hex(&h[..24])))
     }
 
     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding
@@ -86,8 +87,14 @@ mod tests {
 
     #[test]
     fn claim_id_is_content_addressed() {
-        assert_eq!(ClaimId::from_signing_bytes(b"abc"), ClaimId::from_signing_bytes(b"abc"));
-        assert_ne!(ClaimId::from_signing_bytes(b"abc"), ClaimId::from_signing_bytes(b"abd"));
+        assert_eq!(
+            ClaimId::from_signing_bytes(b"abc"),
+            ClaimId::from_signing_bytes(b"abc")
+        );
+        assert_ne!(
+            ClaimId::from_signing_bytes(b"abc"),
+            ClaimId::from_signing_bytes(b"abd")
+        );
         // pins as_str: non-empty and not the mutation sentinel
         let id = ClaimId::from_signing_bytes(b"abc");
         assert!(!id.as_str().is_empty());

@@ -4,8 +4,8 @@
 use std::path::{Path, PathBuf};
 
 use aion_trust_claims::{
-    build_presentation, verify_presentation, Claim, EmploymentBody, IssuerDirectory,
-    Presentation, Validity,
+    build_presentation, verify_presentation, BackgroundCheckBody, Claim, ClaimBody, EmploymentBody,
+    IssuerDirectory, Presentation, Validity,
 };
 use aion_trust_core::identity::verifying_key_from_hex;
 use aion_trust_core::{Did, Identity, Result, Timestamp, TrustError};
@@ -13,7 +13,10 @@ use clap::{Parser, Subcommand};
 use serde::Serialize;
 
 #[derive(Parser)]
-#[command(name = "aion-trust", about = "Verifiable résumé kernel — issue, present, verify.")]
+#[command(
+    name = "aion-trust",
+    about = "Verifiable résumé kernel — issue, present, verify."
+)]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -46,6 +49,27 @@ enum Cmd {
         rehire: bool,
         #[arg(long)]
         valid_until: Option<i64>,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// Issue (sign) a background-check claim for a subject did.
+    IssueCheck {
+        #[arg(long)]
+        issuer: String,
+        #[arg(long)]
+        subject: String,
+        #[arg(long)]
+        provider: String,
+        #[arg(long = "scope", required = true)]
+        scope: Vec<String>,
+        #[arg(long, default_value = "clear")]
+        result: String,
+        #[arg(long)]
+        performed: String,
+        #[arg(long)]
+        valid_until: Option<String>,
+        #[arg(long, default_value = "US")]
+        jurisdiction: String,
         #[arg(long)]
         out: Option<PathBuf>,
     },
@@ -86,6 +110,7 @@ fn run(cli: Cli) -> Result<()> {
     match cli.cmd {
         Cmd::Keygen { out } => keygen(out),
         Cmd::Issue { .. } => issue(cli.cmd),
+        Cmd::IssueCheck { .. } => issue_check(cli.cmd),
         Cmd::Present { .. } => present(cli.cmd),
         Cmd::Verify { .. } => verify(cli.cmd),
     }
@@ -95,7 +120,10 @@ fn keygen(out: Option<PathBuf>) -> Result<()> {
     let id = Identity::generate();
     let secret = id.secret_hex();
     println!("did:    {}", id.did());
-    println!("pubkey: {}", aion_trust_core::encoding::to_hex(&id.verifying_key().to_bytes()));
+    println!(
+        "pubkey: {}",
+        aion_trust_core::encoding::to_hex(&id.verifying_key().to_bytes())
+    );
     if let Some(path) = out {
         std::fs::write(&path, &secret)?;
         println!("secret: written to {}", path.display());
@@ -107,7 +135,16 @@ fn keygen(out: Option<PathBuf>) -> Result<()> {
 
 fn issue(cmd: Cmd) -> Result<()> {
     let Cmd::Issue {
-        issuer, subject, employer, title, start, end, employment_type, rehire, valid_until, out,
+        issuer,
+        subject,
+        employer,
+        title,
+        start,
+        end,
+        employment_type,
+        rehire,
+        valid_until,
+        out,
     } = cmd
     else {
         unreachable!()
@@ -117,14 +154,63 @@ fn issue(cmd: Cmd) -> Result<()> {
         from: Timestamp::now(),
         until: valid_until.map(Timestamp),
     };
-    let body = EmploymentBody { employer, title, employment_type, start, end, rehire_eligible: rehire };
+    let body = ClaimBody::Employment(EmploymentBody {
+        employer,
+        title,
+        employment_type,
+        start,
+        end,
+        rehire_eligible: rehire,
+    });
+    let claim = Claim::issue(&issuer, &Did::from_string(subject), validity, body)
+        .map_err(|e| TrustError::Decode(format!("issue failed: {e}")))?;
+    emit(&claim, out)
+}
+
+fn issue_check(cmd: Cmd) -> Result<()> {
+    let Cmd::IssueCheck {
+        issuer,
+        subject,
+        provider,
+        scope,
+        result,
+        performed,
+        valid_until,
+        jurisdiction,
+        out,
+    } = cmd
+    else {
+        unreachable!()
+    };
+    let issuer = load_identity(&issuer)?;
+    let validity = Validity {
+        from: Timestamp::now(),
+        until: None,
+    };
+    let body = ClaimBody::BackgroundCheck(BackgroundCheckBody {
+        provider,
+        scope,
+        result,
+        performed,
+        valid_until,
+        jurisdiction,
+        fcra_compliant: true,
+    });
     let claim = Claim::issue(&issuer, &Did::from_string(subject), validity, body)
         .map_err(|e| TrustError::Decode(format!("issue failed: {e}")))?;
     emit(&claim, out)
 }
 
 fn present(cmd: Cmd) -> Result<()> {
-    let Cmd::Present { subject, audience, purpose, claims, expires_in, out } = cmd else {
+    let Cmd::Present {
+        subject,
+        audience,
+        purpose,
+        claims,
+        expires_in,
+        out,
+    } = cmd
+    else {
         unreachable!()
     };
     let subject = load_identity(&subject)?;
@@ -133,16 +219,29 @@ fn present(cmd: Cmd) -> Result<()> {
         loaded.push(read_json::<Claim>(path)?);
     }
     let now = Timestamp::now();
-    let nonce = aion_context::crypto::generate_nonce();
+    // 24-byte nonce (two 12-byte CSPRNG draws) — over the verifier's 16-byte floor.
+    let n1 = aion_context::crypto::generate_nonce();
+    let n2 = aion_context::crypto::generate_nonce();
+    let nonce: Vec<u8> = n1.iter().chain(n2.iter()).copied().collect();
     let presentation = build_presentation(
-        &subject, &Did::from_string(audience), &purpose, &nonce, now,
-        now.plus_seconds(expires_in), loaded,
+        &subject,
+        &Did::from_string(audience),
+        &purpose,
+        &nonce,
+        now,
+        now.plus_seconds(expires_in),
+        loaded,
     );
     emit(&presentation, out)
 }
 
 fn verify(cmd: Cmd) -> Result<()> {
-    let Cmd::Verify { presentation, audience, issuer_keys } = cmd else {
+    let Cmd::Verify {
+        presentation,
+        audience,
+        issuer_keys,
+    } = cmd
+    else {
         unreachable!()
     };
     let p = read_json::<Presentation>(&presentation)?;
@@ -150,12 +249,33 @@ fn verify(cmd: Cmd) -> Result<()> {
     for key in &issuer_keys {
         directory.register(verifying_key_from_hex(key)?);
     }
-    let report = verify_presentation(&p, &Did::from_string(audience), Timestamp::now(), &directory, false)?;
+    let report = verify_presentation(
+        &p,
+        &Did::from_string(audience),
+        Timestamp::now(),
+        &directory,
+        false,
+    )?;
     for c in &report.checks {
         let mark = if c.passed { "✓" } else { "✗" };
-        println!("  {mark} {}{}", c.name, if c.detail.is_empty() { String::new() } else { format!("  ({})", c.detail) });
+        println!(
+            "  {mark} {}{}",
+            c.name,
+            if c.detail.is_empty() {
+                String::new()
+            } else {
+                format!("  ({})", c.detail)
+            }
+        );
     }
-    println!("\n{}", if report.accepted { "ACCEPTED" } else { "REJECTED" });
+    println!(
+        "\n{}",
+        if report.accepted {
+            "ACCEPTED"
+        } else {
+            "REJECTED"
+        }
+    );
     std::process::exit(if report.accepted { 0 } else { 1 });
 }
 

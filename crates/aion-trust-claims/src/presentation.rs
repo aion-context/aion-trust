@@ -18,6 +18,9 @@ use crate::claim::Claim;
 
 pub const PRES_DOMAIN: &[u8] = b"aion-trust/presentation/v1";
 
+/// Minimum nonce length the verifier accepts (128-bit anti-replay).
+const MIN_NONCE_LEN: usize = 16;
+
 /// A subject-signed bundle presented to one verifier. Self-authenticating: it carries the
 /// subject's public key, which must derive the stated `subject_id`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -99,7 +102,14 @@ pub struct Check {
     pub detail: String,
 }
 
-/// The full result of verifying a presentation. `accepted` iff every check passed.
+/// The full result of verifying a presentation. `accepted` is true iff every check passed.
+///
+/// Through Phase 2 `accepted` means **authentic and recognized**: the subject controls the key
+/// the claims were issued to, the presentation is bound to this verifier and unexpired with a
+/// fresh, sufficiently-long nonce, it discloses at least one claim, and every claim is
+/// issuer-signed by a key in the verifier's directory. It does **not** yet mean **accredited**
+/// (issuer authorized for the category) or **unrevoked** — those arrive in Phase 3. Treat
+/// `accepted` as *authentic*, not *authoritative*.
 #[derive(Clone, Debug, Serialize)]
 pub struct VerificationReport {
     pub accepted: bool,
@@ -125,21 +135,65 @@ pub fn verify_presentation(
 ) -> Result<VerificationReport> {
     let mut checks = Vec::new();
     let subject_vk = verifying_key_from_hex(&p.subject_key)?;
+    let nonce_bytes = decode_nonce(&p.nonce)?;
 
     let binds = Did::from_key(&subject_vk) == p.subject_id;
-    check(&mut checks, "subject_id binds to key", binds, p.subject_id.to_string());
-    check(&mut checks, "audience matches verifier", &p.audience == audience, p.audience.to_string());
+    check(
+        &mut checks,
+        "subject_id binds to key",
+        binds,
+        p.subject_id.to_string(),
+    );
+    check(
+        &mut checks,
+        "audience matches verifier",
+        &p.audience == audience,
+        p.audience.to_string(),
+    );
     let unexpired = now >= p.issued_at && now <= p.expires_at;
-    check(&mut checks, "unexpired", unexpired, format!("now={}, expires={}", now.0, p.expires_at.0));
-    check(&mut checks, "nonce fresh (not replayed)", !nonce_already_seen, p.nonce.clone());
+    check(
+        &mut checks,
+        "unexpired",
+        unexpired,
+        format!("now={}, expires={}", now.0, p.expires_at.0),
+    );
+    check(
+        &mut checks,
+        "nonce fresh (not replayed)",
+        !nonce_already_seen,
+        p.nonce.clone(),
+    );
+    let nonce_ok = nonce_bytes.len() >= MIN_NONCE_LEN;
+    check(
+        &mut checks,
+        "nonce sufficiently long",
+        nonce_ok,
+        format!("{} bytes", nonce_bytes.len()),
+    );
+    check(
+        &mut checks,
+        "discloses at least one claim",
+        !p.claims.is_empty(),
+        format!("{} claim(s)", p.claims.len()),
+    );
 
     let signing = pres_signing_bytes(
-        &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,
-        p.issued_at, p.expires_at, &p.claims,
+        &p.subject_id,
+        &p.audience,
+        &p.purpose,
+        &nonce_bytes,
+        p.issued_at,
+        p.expires_at,
+        &p.claims,
     );
     let sig = decode_array::<64>(&p.subject_signature)?;
     let sig_ok = subject_vk.verify(&signing, &sig).is_ok();
-    check(&mut checks, "subject signature valid", sig_ok, String::new());
+    check(
+        &mut checks,
+        "subject signature valid",
+        sig_ok,
+        String::new(),
+    );
 
     for claim in &p.claims {
         verify_one_claim(&mut checks, claim, &p.subject_id, now, directory);
@@ -157,16 +211,31 @@ fn verify_one_claim(
     directory: &IssuerDirectory,
 ) {
     let id = claim.claim_id().as_str().to_string();
-    check(checks, "claim subject matches presenter", &claim.subject_id == presenter, id.clone());
+    check(
+        checks,
+        "claim subject matches presenter",
+        &claim.subject_id == presenter,
+        id.clone(),
+    );
 
     let Some(issuer_vk) = directory.get(claim.issuer_id()) else {
-        check(checks, "issuer recognized", false, format!("unknown issuer {}", claim.issuer_id()));
+        check(
+            checks,
+            "issuer recognized",
+            false,
+            format!("unknown issuer {}", claim.issuer_id()),
+        );
         return;
     };
     match claim.verify(issuer_vk) {
         Ok(verified) => {
             check(checks, "claim authentic", true, id);
-            check(checks, "claim within validity", verified.active_at(now), String::new());
+            check(
+                checks,
+                "claim within validity",
+                verified.active_at(now),
+                String::new(),
+            );
         }
         Err(reject) => check(checks, "claim authentic", false, reject.to_string()),
     }
@@ -211,11 +280,34 @@ mod tests {
         let base = pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(1), Timestamp(2), &[]);
         assert!(!base.is_empty()); // kills pres_signing_bytes -> vec![]
         let b = Did::from_string("did:aion:b".into());
-        assert_ne!(base, pres_signing_bytes(&s, &b, "purpose", b"nonce", Timestamp(1), Timestamp(2), &[]));
-        assert_ne!(base, pres_signing_bytes(&s, &a, "other", b"nonce", Timestamp(1), Timestamp(2), &[]));
-        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"different", Timestamp(1), Timestamp(2), &[]));
-        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(9), Timestamp(2), &[]));
-        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(1), Timestamp(9), &[]));
+        assert_ne!(
+            base,
+            pres_signing_bytes(&s, &b, "purpose", b"nonce", Timestamp(1), Timestamp(2), &[])
+        );
+        assert_ne!(
+            base,
+            pres_signing_bytes(&s, &a, "other", b"nonce", Timestamp(1), Timestamp(2), &[])
+        );
+        assert_ne!(
+            base,
+            pres_signing_bytes(
+                &s,
+                &a,
+                "purpose",
+                b"different",
+                Timestamp(1),
+                Timestamp(2),
+                &[]
+            )
+        );
+        assert_ne!(
+            base,
+            pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(9), Timestamp(2), &[])
+        );
+        assert_ne!(
+            base,
+            pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(1), Timestamp(9), &[])
+        );
     }
 
     #[test]
@@ -224,6 +316,8 @@ mod tests {
         let mut dir = IssuerDirectory::new();
         dir.register(issuer.verifying_key());
         assert!(dir.get(&issuer.did()).is_some());
-        assert!(dir.get(&Did::from_string("did:aion:nobody".into())).is_none());
+        assert!(dir
+            .get(&Did::from_string("did:aion:nobody".into()))
+            .is_none());
     }
 }
