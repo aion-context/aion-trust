@@ -31,7 +31,7 @@ Breadth and the money workflow.
 - The **run-once / reuse-many** background-check workflow, demonstrated across two employers.
 - Key succession + a first recovery policy.
 
-## Phase 3 — Accreditation & federation
+## Phase 3 — Accreditation & federation  ✅
 
 Authority, not just authenticity.
 
