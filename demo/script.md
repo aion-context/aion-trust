@@ -3,10 +3,11 @@
 **One idea:** *A résumé you can prove — do the work once, prove it forever.*
 **Audience:** buyers / decision-makers (CTO, head of talent, head of security).
 **Covers:** full product tour (issuer · wallet · verifier) + the revoke→reject moment + W3C interop.
-**Target runtime:** ~2:45 · **Status:** script only — no audio generated yet.
-**Recommended voice (ElevenLabs):** *Sarah — Mature, Reassuring, Confident* (`EXAVITQu4vr4xnSDxMaL`);
-alt *George — Warm, Captivating Storyteller*. Voices listed in
-`completeness-engine-pr12/demo/elevenlabs-check.json`; API key in `~/.creds/eleven.env`.
+**Runtime:** ~2:55 · **Status:** produced → `demo/aion-trust-demo.mp4`.
+**Voice (ElevenLabs):** *Sarah — Mature, Reassuring, Confident* (`EXAVITQu4vr4xnSDxMaL`),
+model **`eleven_v3`** (latest); API key in `~/.creds/eleven.env`.
+**Pronunciation:** the spoken text respells a few tokens (the on-screen script below is unchanged):
+`aion → "eye-on"`, `W3C → "W three C"`, `did:key → "did key"`, `PDF → "P D F"`.
 
 > Numbers/IDs are never read aloud — hashes and DIDs stay on screen. The voice carries the meaning;
 > the screen carries the proof.

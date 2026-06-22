@@ -25,8 +25,10 @@ Surfaces recorded: `http://127.0.0.1:8080` (issuer · wallet · verifier · walk
 ## Narration
 
 - Voice: ElevenLabs **Sarah — Mature, Reassuring, Confident** (`EXAVITQu4vr4xnSDxMaL`),
-  model `eleven_multilingual_v2`. Key: `~/.creds/eleven.env`.
+  model **`eleven_v3`** (latest). Key: `~/.creds/eleven.env`.
 - 8 scenes generated separately and measured, so the screen action tracks each line.
+- Pronunciation respellings in the spoken text (not the on-screen script): `aion → "eye-on"`,
+  `W3C → "W three C"`, `did:key → "did key"`, `PDF → "P D F"`, plus a `<break>` for pacing.
 
 ## Scenes (start → narration)
 
@@ -46,11 +48,10 @@ Surfaces recorded: `http://127.0.0.1:8080` (issuer · wallet · verifier · walk
 Final MP4 (ffprobe):
 
 - Container: MP4 (`+faststart`)
-- Duration: 167.240 s
+- Duration: 175.360 s
 - Video: H.264, 1440×900, 25 fps
 - Audio: AAC, 192 kbps
-- Size: 9,393,739 bytes
-- Narration track: 167.523 s
+- Narration track: 175.673 s (model `eleven_v3`)
 
 The interop scene's Verifiable Credential is real output from
 `aion-trust export-vc` (saved as `demo/interop-vc.json`); the three guard outcomes
