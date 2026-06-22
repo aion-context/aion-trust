@@ -5,10 +5,11 @@ use std::path::{Path, PathBuf};
 
 use std::collections::HashMap;
 
+use aion_context::crypto::VerifyingKey;
 use aion_trust_claims::{
     build_presentation, verify_presentation_with_predicates, verify_presentation_with_store,
-    BackgroundCheckBody, Claim, ClaimBody, EmploymentBody, FieldSelector, IssuerDirectory,
-    NonceStore, PredicateOp, PredicateRequest, Presentation, Validity,
+    BackgroundCheckBody, Claim, ClaimBody, DisclosedClaim, EmploymentBody, FieldSelector,
+    IssuerDirectory, NonceStore, PredicateOp, PredicateRequest, Presentation, Validity,
 };
 use aion_trust_core::identity::verifying_key_from_hex;
 use aion_trust_core::{Did, Identity, Result, Timestamp, TrustError};
@@ -118,6 +119,41 @@ enum Cmd {
         #[arg(long, default_value_t = 8080)]
         port: u16,
     },
+    /// Export a disclosed claim (a presentation's `claims[i]`) as a W3C Verifiable Credential.
+    /// Note: verification uses aion-trust's native proof, NOT generic W3C Data Integrity.
+    ExportVc {
+        #[arg(long)]
+        disclosed: PathBuf,
+        /// The issuer's public key (hex), e.g. from `keygen`'s `pubkey` line.
+        #[arg(long = "issuer-key")]
+        issuer_key: String,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// Import a Verifiable Credential, verify it (native proof), and print/emit the disclosure.
+    ImportVc {
+        #[arg(long = "in")]
+        input: PathBuf,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// Export a presentation as a W3C Verifiable Presentation (native proof preserved).
+    ExportVp {
+        #[arg(long)]
+        presentation: PathBuf,
+        /// Issuer public key(s) (hex) to resolve the embedded credentials. Repeatable.
+        #[arg(long = "issuer-key", required = true)]
+        issuer_keys: Vec<String>,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// Import a Verifiable Presentation, verify each embedded credential, and print/emit it.
+    ImportVp {
+        #[arg(long = "in")]
+        input: PathBuf,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
 }
 
 fn main() {
@@ -135,7 +171,74 @@ fn run(cli: Cli) -> Result<()> {
         Cmd::Present { .. } => present(cli.cmd),
         Cmd::Verify { .. } => verify(cli.cmd),
         Cmd::Serve { port } => aion_trust_web::serve(port).map_err(TrustError::Io),
+        Cmd::ExportVc { .. } => export_vc(cli.cmd),
+        Cmd::ImportVc { .. } => import_vc(cli.cmd),
+        Cmd::ExportVp { .. } => export_vp(cli.cmd),
+        Cmd::ImportVp { .. } => import_vp(cli.cmd),
     }
+}
+
+fn interop_err(e: aion_trust_interop::InteropError) -> TrustError {
+    TrustError::Decode(format!("interop: {e}"))
+}
+
+fn export_vc(cmd: Cmd) -> Result<()> {
+    let Cmd::ExportVc {
+        disclosed,
+        issuer_key,
+        out,
+    } = cmd
+    else {
+        unreachable!()
+    };
+    let d = read_json::<DisclosedClaim>(&disclosed)?;
+    let vk = verifying_key_from_hex(&issuer_key)?;
+    let vc = aion_trust_interop::export_disclosed_vc(&d, &vk).map_err(interop_err)?;
+    emit(&vc, out)
+}
+
+fn import_vc(cmd: Cmd) -> Result<()> {
+    let Cmd::ImportVc { input, out } = cmd else {
+        unreachable!()
+    };
+    let doc = read_json::<serde_json::Value>(&input)?;
+    let d = aion_trust_interop::import_disclosed_vc(&doc).map_err(interop_err)?;
+    eprintln!("verified ✓  claim {}", d.claim_id().as_str());
+    emit(&d, out)
+}
+
+fn export_vp(cmd: Cmd) -> Result<()> {
+    let Cmd::ExportVp {
+        presentation,
+        issuer_keys,
+        out,
+    } = cmd
+    else {
+        unreachable!()
+    };
+    let p = read_json::<Presentation>(&presentation)?;
+    let mut by_did: HashMap<String, VerifyingKey> = HashMap::new();
+    for hex in &issuer_keys {
+        let vk = verifying_key_from_hex(hex)?;
+        by_did.insert(Did::from_key(&vk).as_str().to_string(), vk);
+    }
+    let resolve = |did: &Did| by_did.get(did.as_str()).copied();
+    let vp = aion_trust_interop::export_presentation_vp(&p, &resolve).map_err(interop_err)?;
+    emit(&vp, out)
+}
+
+fn import_vp(cmd: Cmd) -> Result<()> {
+    let Cmd::ImportVp { input, out } = cmd else {
+        unreachable!()
+    };
+    let doc = read_json::<serde_json::Value>(&input)?;
+    let p = aion_trust_interop::import_presentation_vp(&doc).map_err(interop_err)?;
+    eprintln!(
+        "verified ✓  {} credential(s) in presentation {}",
+        p.claims.len(),
+        p.presentation_id
+    );
+    emit(&p, out)
 }
 
 fn keygen(out: Option<PathBuf>) -> Result<()> {

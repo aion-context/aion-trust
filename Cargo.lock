@@ -73,6 +73,7 @@ dependencies = [
  "aion-context",
  "aion-trust-claims",
  "aion-trust-core",
+ "aion-trust-interop",
  "aion-trust-web",
  "clap",
  "serde",
@@ -84,6 +85,18 @@ name = "aion-trust-core"
 version = "0.1.0"
 dependencies = [
  "aion-context",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "aion-trust-interop"
+version = "0.1.0"
+dependencies = [
+ "aion-context",
+ "aion-trust-claims",
+ "aion-trust-core",
  "serde",
  "serde_json",
  "thiserror",

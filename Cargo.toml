@@ -6,6 +6,7 @@ members = [
     "crates/aion-trust-registry",
     "crates/aion-trust-wallet",
     "crates/aion-trust-web",
+    "crates/aion-trust-interop",
     "crates/aion-trust-cli",
 ]
 
@@ -21,6 +22,7 @@ aion-trust-claims = { path = "crates/aion-trust-claims" }
 aion-trust-registry = { path = "crates/aion-trust-registry" }
 aion-trust-wallet = { path = "crates/aion-trust-wallet" }
 aion-trust-web = { path = "crates/aion-trust-web" }
+aion-trust-interop = { path = "crates/aion-trust-interop" }
 aion-context = { path = "../aion-context" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
