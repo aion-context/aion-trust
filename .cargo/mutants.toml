@@ -1,5 +1,15 @@
 # Mutation testing targets the library logic (aion-trust-core, aion-trust-claims), where
 # correctness is load-bearing. aion-trust-cli is thin I/O glue exercised by the end-to-end
-# demo, not unit-mutated. Run in-place because aion-context is a sibling path dep that does
-# not survive cargo-mutants' default /tmp copy.
-exclude_globs = ["crates/aion-trust-cli/**"]
+# demo, not unit-mutated. aion-trust-web is likewise glue — HTTP handlers, in-memory state, the
+# scripted walkthrough — EXCEPT its pure logic (view.rs rendering, parse.rs form/predicate
+# parsing), which stays in scope at the 0-survivor bar. Run in-place because aion-context is a
+# sibling path dep that does not survive cargo-mutants' default /tmp copy.
+exclude_globs = [
+    "crates/aion-trust-cli/**",
+    "crates/aion-trust-web/src/lib.rs",
+    "crates/aion-trust-web/src/state.rs",
+    "crates/aion-trust-web/src/issuer.rs",
+    "crates/aion-trust-web/src/wallet.rs",
+    "crates/aion-trust-web/src/verifier.rs",
+    "crates/aion-trust-web/src/walkthrough.rs",
+]

@@ -56,14 +56,16 @@ Privacy as a feature.
   attribute is revealed (aion-context has no range primitive; invariant #4 forbids hand-rolling
   one). The types are shaped so a real ZK proof can drop in without a wire change.
 
-## Phase 5 — The surfaces
+## Phase 5 — The surfaces  ✅
 
 Make it real, the way aion-edu's web app did.
 
 - `aion-trust-web` (axum): an **issuer console**, a **candidate wallet**, and an **employer
-  verifier**.
-- A live walkthrough: issue a few claims → candidate assembles a presentation → employer
-  verifies instantly → an issuer revokes → the same presentation now fails.
+  verifier**, served as one local app (`aion-trust serve`).
+- A live walkthrough: issue a claim → candidate presents it → employer verifies instantly
+  (green) → the issuer revokes → the same claim now fails (red), streamed over SSE.
+- **Local single-operator demo** — loopback-bound, in-memory, no persistence; the wallet would
+  move to the subject's device in production. See [`WEB-SURFACES.md`](WEB-SURFACES.md).
 
 ## Phase 6 — Interop & cost model
 

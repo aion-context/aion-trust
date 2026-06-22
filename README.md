@@ -56,8 +56,24 @@ See [`docs/VISION.md`](docs/VISION.md) for the full case and where the savings l
 
 ## Status
 
-**Phase 0 — Architecture.** This repository currently holds the founding design. The
-documents below define the model before any code is written.
+**Phases 0–5 complete.** The cryptographic kernel, claims + wallet, accreditation/revocation,
+field-level selective disclosure (+ anti-replay and predicate proofs), and the web surfaces are
+all implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+### Run the web demo
+
+```
+cargo run -p aion-trust-cli -- serve --port 8080
+# open http://127.0.0.1:8080  — start with /walkthrough
+```
+
+Three surfaces — **issuer console**, **candidate wallet**, **employer verifier** — and a live
+walkthrough where a verified claim turns red the instant its issuer revokes it. It is a **local
+single-operator demo** (loopback only, in-memory, no persistence); see
+[`docs/WEB-SURFACES.md`](docs/WEB-SURFACES.md) for what that means and why server-side custody is
+*not* the production architecture.
+
+The CLI also drives the kernel directly: `keygen`, `issue`, `present`, `verify`.
 
 ## Architecture documents
 
@@ -68,6 +84,7 @@ documents below define the model before any code is written.
 | [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Claim types, the Trust Profile, the Presentation artifact, schemas |
 | [`docs/WORKFLOWS.md`](docs/WORKFLOWS.md) | End-to-end flows: issue, assemble, present, verify, reuse, revoke |
 | [`docs/TRUST-MODEL.md`](docs/TRUST-MODEL.md) | Issuer accreditation, selective disclosure, revocation, threat model |
+| [`docs/WEB-SURFACES.md`](docs/WEB-SURFACES.md) | The Phase 5 web demo: surfaces, routes, and the local-demo privacy guardrails |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Phases from kernel to web demo to interop |
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Terms of art |
 

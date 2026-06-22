@@ -1,0 +1,23 @@
+[package]
+name = "aion-trust-web"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Local single-operator demo web surfaces for aion-trust: issuer console, candidate wallet, employer verifier."
+
+[dependencies]
+aion-trust-core.workspace = true
+aion-trust-claims.workspace = true
+aion-trust-registry.workspace = true
+aion-trust-wallet.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "net"] }
+tokio-stream = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "macros"] }
