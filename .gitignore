@@ -11,6 +11,10 @@
 *.p12
 .creds/
 !*.env.example
+# Wallet files (encrypted, but still hold key material — keep them out of git)
+*.wallet
+*.wallet.json
+/wallets/
 
 # ── OS / editor noise ───────────────────────────────────────────
 .DS_Store

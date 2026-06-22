@@ -11,7 +11,7 @@ else
 fi
 [ -z "$files" ] && { echo "  (no files to scan)"; exit 0; }
 
-pattern='-----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{20,}|sk_(live|test)_[A-Za-z0-9]{16,}|sk_[A-Za-z0-9]{24,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[0-9A-Za-z-]{10,}|(ELEVEN_LABS_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY)=[A-Za-z0-9/_+-]{12,}'
+pattern='-----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{20,}|sk_(live|test)_[A-Za-z0-9]{16,}|sk_[A-Za-z0-9]{24,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[0-9A-Za-z-]{10,}|(ELEVEN_LABS_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY)=[A-Za-z0-9/_+-]{12,}|"secret"[[:space:]]*:[[:space:]]*"[0-9a-fA-F]{64}"'
 
 hits=$(printf '%s\n' "$files" | xargs -r grep -nIE -e "$pattern" 2>/dev/null | grep -viE '\.example|placeholder|your_.*_here|REDACTED' || true)
 if [ -n "$hits" ]; then

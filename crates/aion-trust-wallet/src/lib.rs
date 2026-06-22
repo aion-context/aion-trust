@@ -8,8 +8,13 @@
 use std::path::Path;
 
 use aion_trust_claims::{build_presentation, Claim, Presentation};
+use aion_trust_core::encoding::{decode_array, from_hex, to_hex};
 use aion_trust_core::{Did, Identity, Result, Timestamp};
 use serde::{Deserialize, Serialize};
+
+/// HKDF `info` and AEAD `aad` — version-bind the wallet's encryption.
+const WALLET_INFO: &[u8] = b"aion-trust-wallet/key/v1";
+const WALLET_AAD: &[u8] = b"aion-trust-wallet/v1";
 
 /// A subject's wallet: their identity plus the claims they hold.
 pub struct Wallet {
@@ -17,9 +22,19 @@ pub struct Wallet {
     claims: Vec<Claim>,
 }
 
-/// On-disk form. Holds the secret — write only to a protected, gitignored location.
+/// On-disk form: an authenticated-encrypted blob. The secret (and PII claim bodies) are
+/// encrypted under a passphrase-derived key, so the file at rest never exposes the private key.
 #[derive(Serialize, Deserialize)]
 struct WalletFile {
+    version: u8,
+    kdf_salt: String,
+    nonce: String,
+    ciphertext: String,
+}
+
+/// The plaintext payload, sealed inside `WalletFile.ciphertext`.
+#[derive(Serialize, Deserialize)]
+struct WalletInner {
     secret: String,
     claims: Vec<Claim>,
 }
@@ -99,22 +114,43 @@ impl Wallet {
         )
     }
 
-    /// Persist the wallet (including the secret) to `path` as JSON.
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let file = WalletFile {
+    /// Persist the wallet to `path`, encrypting the secret and claims under a key derived
+    /// from `passphrase`. The file at rest never exposes the private key.
+    pub fn save(&self, path: &Path, passphrase: &str) -> Result<()> {
+        let inner = WalletInner {
             secret: self.identity.secret_hex(),
             claims: self.claims.clone(),
+        };
+        let plaintext = serde_json::to_vec(&inner)?;
+        let salt = aion_context::crypto::generate_nonce();
+        let nonce = aion_context::crypto::generate_nonce();
+        let mut key = [0u8; 32];
+        aion_context::crypto::derive_key(passphrase.as_bytes(), &salt, WALLET_INFO, &mut key)?;
+        let ciphertext = aion_context::crypto::encrypt(&key, &nonce, &plaintext, WALLET_AAD)?;
+        let file = WalletFile {
+            version: 1,
+            kdf_salt: to_hex(&salt),
+            nonce: to_hex(&nonce),
+            ciphertext: to_hex(&ciphertext),
         };
         std::fs::write(path, serde_json::to_string_pretty(&file)?)?;
         Ok(())
     }
 
-    /// Load a wallet (identity + claims) from `path`.
-    pub fn load(path: &Path) -> Result<Self> {
+    /// Load a wallet from `path`, decrypting with `passphrase`. A wrong passphrase (or a
+    /// tampered file) fails the AEAD authentication and returns an error.
+    pub fn load(path: &Path, passphrase: &str) -> Result<Self> {
         let file: WalletFile = serde_json::from_str(&std::fs::read_to_string(path)?)?;
+        let salt = from_hex(&file.kdf_salt)?;
+        let nonce = decode_array::<12>(&file.nonce)?;
+        let ciphertext = from_hex(&file.ciphertext)?;
+        let mut key = [0u8; 32];
+        aion_context::crypto::derive_key(passphrase.as_bytes(), &salt, WALLET_INFO, &mut key)?;
+        let plaintext = aion_context::crypto::decrypt(&key, &nonce, &ciphertext, WALLET_AAD)?;
+        let inner: WalletInner = serde_json::from_slice(&plaintext)?;
         Ok(Self {
-            identity: Identity::from_secret_hex(&file.secret)?,
-            claims: file.claims,
+            identity: Identity::from_secret_hex(&inner.secret)?,
+            claims: inner.claims,
         })
     }
 }
@@ -175,21 +211,39 @@ mod tests {
         assert_eq!(one.claims.len(), 1); // named selector → just that claim
     }
 
+    fn temp_path(did: &Did) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "aion-wallet-test-{}.json",
+            did.as_str().replace(':', "_")
+        ))
+    }
+
     #[test]
-    fn save_then_load_preserves_identity_and_claims() {
+    fn save_then_load_round_trips_under_passphrase() {
         let issuer = Identity::generate();
         let mut w = Wallet::generate();
         let did = w.did();
         w.add(employment_claim(&issuer, &did));
-        let dir = std::env::temp_dir();
-        let path = dir.join(format!(
-            "aion-wallet-test-{}.json",
-            did.as_str().replace(':', "_")
-        ));
-        w.save(&path).unwrap();
-        let loaded = Wallet::load(&path).unwrap();
+        let path = temp_path(&did);
+        w.save(&path, "correct horse battery staple").unwrap();
+        // the file at rest must NOT contain the plaintext secret
+        let on_disk = std::fs::read_to_string(&path).unwrap();
+        assert!(!on_disk.contains(&w.identity().secret_hex()));
+        let loaded = Wallet::load(&path, "correct horse battery staple").unwrap();
         let _ = std::fs::remove_file(&path);
         assert_eq!(loaded.did(), did); // same identity
         assert_eq!(loaded.claims().len(), 1); // same claims
+    }
+
+    #[test]
+    fn wrong_passphrase_fails_to_load() {
+        let mut w = Wallet::generate();
+        let did = w.did();
+        w.add(employment_claim(&Identity::generate(), &did));
+        let path = temp_path(&did);
+        w.save(&path, "right").unwrap();
+        let bad = Wallet::load(&path, "wrong");
+        let _ = std::fs::remove_file(&path);
+        assert!(bad.is_err()); // AEAD authentication fails
     }
 }

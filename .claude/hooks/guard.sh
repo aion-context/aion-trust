@@ -14,7 +14,7 @@ except Exception: pass' 2>/dev/null)
 
 [ -z "$fp" ] && exit 0
 
-SECRET='-----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{20,}|sk_(live|test)_[A-Za-z0-9]{16,}|sk_[A-Za-z0-9]{24,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(ELEVEN_LABS_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY)=[A-Za-z0-9/_+-]{12,}'
+SECRET='-----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{20,}|sk_(live|test)_[A-Za-z0-9]{16,}|sk_[A-Za-z0-9]{24,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(ELEVEN_LABS_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY)=[A-Za-z0-9/_+-]{12,}|"secret"[[:space:]]*:[[:space:]]*"[0-9a-fA-F]{64}"'
 
 # ── HARD BLOCK: secrets / private keys ──────────────────────────────
 if printf '%s' "$content" | grep -qE -e "$SECRET"; then
