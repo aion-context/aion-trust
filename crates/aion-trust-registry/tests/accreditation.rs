@@ -3,7 +3,8 @@
 //! verdict to rejected.
 
 use aion_trust_claims::{
-    build_presentation, verify_presentation, BackgroundCheckBody, Claim, ClaimBody, Validity,
+    build_presentation, verify_presentation, BackgroundCheckBody, Claim, ClaimBody, FieldSelector,
+    Validity,
 };
 use aion_trust_core::{Did, Identity, Timestamp};
 use aion_trust_registry::{Accreditation, Registry, Status};
@@ -53,7 +54,7 @@ fn accreditation_and_revocation_lifecycle() {
             b"nonce-padding-1234",
             now,
             now.plus_seconds(3600),
-            vec![claim.clone()],
+            vec![claim.disclose(&FieldSelector::All).unwrap()],
         )
     };
 
@@ -179,6 +180,48 @@ fn an_accreditor_outside_the_policy_set_does_not_count() {
         !standing.accredited,
         "only accreditors named in the policy count toward K-of-N"
     );
+}
+
+#[test]
+fn lapsed_accreditation_flips_a_prior_green_to_amber() {
+    // A bounded accreditation (until_epoch = 3): a presentation accepted at epoch 2 must be
+    // REJECTED once the epoch advances past the window — verified end-to-end through
+    // verify_presentation, not just Accreditation::active_at in isolation.
+    let provider = Identity::generate();
+    let gov = Identity::generate();
+    let subject = Identity::generate();
+    let verifier = Identity::generate().did();
+    let now = Timestamp(1_700_000_000);
+    let claim = check_claim(&provider, &subject.did());
+    let present = || {
+        build_presentation(
+            &subject,
+            &verifier,
+            "application",
+            b"nonce-padding-9876",
+            now,
+            now.plus_seconds(3600),
+            vec![claim.disclose(&FieldSelector::All).unwrap()],
+        )
+    };
+
+    let mut reg = Registry::new(2);
+    reg.register_issuer(provider.verifying_key());
+    reg.register_accreditor(gov.verifying_key());
+    reg.require_accreditation("background_check", 1, vec![gov.did()]);
+    let mut acc = Accreditation::new(provider.did(), "background_check", 1, Some(3));
+    acc.endorse(&gov);
+    reg.add_accreditation(acc);
+
+    // Epoch 2 (inside the window) → accepted.
+    let green = verify_presentation(&present(), &verifier, now, &reg, false).unwrap();
+    assert!(green.accepted, "checks: {:?}", green.checks);
+
+    // Epoch 4 (past until_epoch=3) → the accreditation has lapsed → rejected.
+    reg.set_epoch(4);
+    let amber = verify_presentation(&present(), &verifier, now, &reg, false).unwrap();
+    assert!(!amber.accepted);
+    assert!(failed(&amber, "issuer accredited"));
 }
 
 #[test]

@@ -42,25 +42,29 @@ fn one_background_check_is_reused_across_two_employers() {
 
     // Employer A accepts it.
     let employer_a = Identity::generate().did();
-    let pres_a = wallet.present(
-        &employer_a,
-        "application:role-a",
-        std::slice::from_ref(&check_id),
-        3600,
-        now,
-    );
+    let pres_a = wallet
+        .present_all(
+            &employer_a,
+            "application:role-a",
+            std::slice::from_ref(&check_id),
+            3600,
+            now,
+        )
+        .unwrap();
     let report_a = verify_presentation(&pres_a, &employer_a, now, &directory, false).unwrap();
     assert!(report_a.accepted, "employer A: {:?}", report_a.checks);
 
     // Employer B accepts the SAME check — no new screening purchased.
     let employer_b = Identity::generate().did();
-    let pres_b = wallet.present(
-        &employer_b,
-        "application:role-b",
-        std::slice::from_ref(&check_id),
-        3600,
-        now,
-    );
+    let pres_b = wallet
+        .present_all(
+            &employer_b,
+            "application:role-b",
+            std::slice::from_ref(&check_id),
+            3600,
+            now,
+        )
+        .unwrap();
     let report_b = verify_presentation(&pres_b, &employer_b, now, &directory, false).unwrap();
     assert!(report_b.accepted, "employer B: {:?}", report_b.checks);
 

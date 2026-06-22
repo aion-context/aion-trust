@@ -10,6 +10,10 @@
 pub mod anchor;
 pub mod bodies;
 pub mod claim;
+pub mod disclosure;
+pub(crate) mod fields;
+pub mod nonce;
+pub mod predicate;
 pub mod presentation;
 
 pub use anchor::{IssuerStanding, TrustAnchor};
@@ -18,7 +22,12 @@ pub use bodies::{
     ReferenceBody, SkillBody,
 };
 pub use claim::{Claim, ClaimReject, Validity, VerifiedClaim};
+pub use disclosure::{
+    DisclosedClaim, FieldSelector, ProvenField, RevealedField, VerifiedDisclosure,
+};
+pub use nonce::{verify_presentation_with_store, InMemoryNonceStore, NonceStore};
+pub use predicate::{evaluate as evaluate_predicate, PredicateOp, PredicateRequest};
 pub use presentation::{
-    build_presentation, verify_presentation, Check, IssuerDirectory, Presentation,
-    VerificationReport,
+    build_presentation, verify_presentation, verify_presentation_with_predicates, Check,
+    IssuerDirectory, Presentation, VerificationReport,
 };

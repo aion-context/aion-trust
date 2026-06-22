@@ -28,6 +28,24 @@
   fails verification without a revocation event.
 - **Selective disclosure** — the subject revealing only chosen claims (claim-level), fields
   (field-level), or properties (predicate proofs).
+- **body_root** — the Merkle root over a claim body's salted field leaves; the issuer signs it,
+  so a subject can disclose a subset of fields and still prove them. Replaces the earlier
+  single `body_hash`.
+- **master_salt** — a 32-byte per-claim secret in the wallet from which every field's leaf salt
+  derives; makes `body_root` a hiding commitment without storing one salt per field.
+- **field leaf** — one body field committed as `hash(domain ‖ index ‖ key ‖ salt ‖ value)`; the
+  unit of field-level disclosure.
+- **audit path** — the sibling hashes from a disclosed leaf up to `body_root`, letting a verifier
+  recompute the root and confirm the field belongs to the signed body.
+- **field_count** — the signed number of field leaves in a claim's tree; fixes the field set so a
+  maliciously omitted field is detectable.
+- **DisclosedClaim** — the on-the-wire, body-less form of a claim: signed scalars + `body_root`
+  plus only the revealed fields and their Merkle proofs. Verifies into a `VerifiedDisclosure`.
+- **predicate proof (minimal-disclosure)** — answering "degree ≥ bachelor's" by disclosing a
+  minimal, issuer-attested coarse attribute (e.g. `degree_rank`) and evaluating it; **not**
+  zero-knowledge — the attribute is revealed and is linkable across presentations.
+- **nonce store** — the verifier's single-use memory of accepted `(audience, nonce)` pairs;
+  recorded only on accept, enforcing anti-replay against the same audience.
 - **claim_id** — an opaque BLAKE3 hash; the only handle the ledger keys claim status on,
   carrying no PII.
 - **Epoch** — an aion-context registry version boundary used to scope and revoke registrations

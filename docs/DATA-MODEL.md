@@ -31,10 +31,18 @@ Every fact is a claim: an issuer's signed attestation about a subject.
   "issuer_id":  "did:aion:Acme…",
   "validity": { "from": "2021-03-01", "until": null },   // until=null → open / current
   "body": { … type-specific, PII-bearing … },
-  "body_hash": "blake3:…",
-  "issuer_signature": "ed25519:…"       // issuer signs {subject_id,type,schema_id,body_hash,validity,claim_id}
+  "master_salt": "blake3:…",            // 32-byte per-claim secret; per-field salts derive from it
+  "body_root": "blake3:…",              // Merkle root over the body's salted field leaves
+  "field_count": 6,                     // number of field leaves; signed, pins the tree shape
+  "issuer_signature": "ed25519:…"       // issuer signs {subject_id,type,schema_id,body_root,field_count,validity,claim_id}
 }
 ```
+
+The body commitment is a **Merkle tree over the body's top-level fields** (JCS key order, each
+a salted leaf), not a single hash — that is what lets a subject disclose a subset of fields and
+still prove them against the issuer-signed `body_root`. The full claim (with `body` and
+`master_salt`) lives only in the wallet; what travels to a verifier is a `DisclosedClaim` (below)
+carrying no body.
 
 ### Claim types
 
@@ -47,8 +55,12 @@ Every fact is a claim: an issuer's signed attestation about a subject.
 **`education`** — importable directly from an [aion-edu](https://github.com/aion-context/aion-edu) sealed diploma.
 ```json
 { "institution": "State University", "credential": "B.S. Computer Science",
-  "conferred": "2020-05-20", "aion_edu_ref": "blake3:…" }
+  "conferred": "2020-05-20", "aion_edu_ref": "blake3:…", "degree_rank": 3 }
 ```
+`degree_rank` is an **issuer-attested ordinal** (0 none · 1 secondary · 2 associate · 3 bachelor
+· 4 master · 5 doctorate) on the scale pinned by `schema_id`. It lets a subject answer "degree ≥
+bachelor's" by disclosing only this coarse rank — a data-minimizing predicate, not a
+zero-knowledge proof (see [`TRUST-MODEL.md`](TRUST-MODEL.md#selective-disclosure)).
 
 **`certification`**
 ```json
@@ -102,17 +114,32 @@ submitted.**
   "nonce": "…",                         // anti-replay, supplied by the verifier
   "issued_at": "2026-06-21T…",
   "expires_at": "2026-06-28T…",
-  "disclosures": [
-    { "claim": { … full claim incl. body … }, "fields": "all" },
-    { "claim": { … }, "fields": ["institution","credential","conferred"] }   // partial
+  "claims": [                           // a list of DisclosedClaim — NO body, only proven fields
+    {
+      "claim_id": "blake3:…", "subject_id": "did:aion:7Hx…", "issuer_id": "did:aion:Uni…",
+      "category": "education", "schema_id": "aion-trust/education/v1",
+      "validity": { "from": "2020-05-20", "until": null },
+      "body_root": "blake3:…", "field_count": 5, "issuer_signature": "ed25519:…",
+      "fields": [                       // only the disclosed fields, each with a Merkle proof
+        { "key": "institution", "index": 4, "salt": "…", "value": "State University",
+          "audit_path": ["blake3:…","blake3:…"] },
+        { "key": "credential",  "index": 2, "salt": "…", "value": "B.S. Computer Science",
+          "audit_path": ["blake3:…","blake3:…"] }
+      ]
+    }
   ],
-  "subject_signature": "ed25519:…"
+  "subject_signature": "ed25519:…"      // subject signs {audience,purpose,nonce,issued_at,expires_at,[claim_id…]}
 }
 ```
 
-The verifier checks the presentation binding (audience, nonce, expiry, subject signature),
-then each disclosed claim (issuer signature, subject match, body↔hash), then issuer
-accreditation and revocation status — all per [`ARCHITECTURE.md`](ARCHITECTURE.md#verification-flow).
+The verifier checks, in order: presentation binding (subject key, audience, expiry, nonce
+freshness + length, subject signature); then per claim — subject match, issuer recognized,
+issuer signature over the reconstructed `{…,body_root,field_count,…}`, and **each disclosed
+field's leaf recomputing the signed `body_root` via its audit path** (with the field's key
+matching the schema field at its index, and `field_count` matching the schema's field set so an
+omitted field is visible); then issuer accreditation and revocation. Optional **predicates** are
+evaluated last, only over claims that passed every check. See
+[`ARCHITECTURE.md`](ARCHITECTURE.md#verification-flow).
 
 ## Ledger records (the only things on aion-context)
 

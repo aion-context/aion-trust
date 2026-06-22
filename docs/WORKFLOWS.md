@@ -24,7 +24,7 @@ The party with authority attests a fact and hands the signed claim to the subjec
 
 ```
 subject     → shares subject_id with the issuer (+ consent)
-issuer      → builds the claim body, computes body_hash, signs the claim
+issuer      → builds the claim body, computes body_root (Merkle over its fields), signs the claim
 issuer      → records claim status = issued on aion-context (opaque claim_id only)
 subject     → stores the claim in their wallet
 ```
@@ -77,10 +77,11 @@ time.
 The employer evaluates the Presentation with no callbacks and no portals.
 
 ```
-for the presentation:  subject signature ✓ · audience = me ✓ · unexpired ✓ · nonce fresh ✓
-for each claim:        issuer signature ✓ · subject matches ✓ · body ↔ body_hash ✓
+for the presentation:  subject signature ✓ · audience = me ✓ · unexpired ✓ · nonce fresh (single-use) ✓
+for each claim:        issuer signature ✓ · subject matches ✓ · disclosed fields ↔ body_root ✓ (none omitted)
 for each issuer:       accredited for this category, this epoch ✓
 for each claim:        status = issued (not revoked) ✓
+for each predicate:    satisfied by a fully-valid claim ✓ (data-minimizing, not zero-knowledge)
 ⇒ ACCEPTED — every line of the résumé is a cryptographic fact.
 ```
 

@@ -15,7 +15,8 @@ use aion_trust_core::{ClaimId, Did, Identity, Result, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::anchor::{IssuerStanding, TrustAnchor};
-use crate::claim::{Claim, VerifiedClaim};
+use crate::disclosure::{DisclosedClaim, VerifiedDisclosure};
+use crate::predicate::{evaluate, PredicateRequest};
 
 pub const PRES_DOMAIN: &[u8] = b"aion-trust/presentation/v1";
 
@@ -34,13 +35,12 @@ pub struct Presentation {
     pub nonce: String,
     pub issued_at: Timestamp,
     pub expires_at: Timestamp,
-    pub claims: Vec<Claim>,
+    pub claims: Vec<DisclosedClaim>,
     pub subject_signature: String,
 }
 
-/// Build and sign a presentation for one `audience`. The required arguments make it
-/// impossible to forget the audience/nonce/expiry binding.
-#[allow(clippy::too_many_arguments)] // a builder lands in Phase 2; the binding is the point
+/// Build and sign a presentation for one `audience`. The seven arguments mirror the signed
+/// fields 1:1; a struct would obscure that the binding is the point.
 pub fn build_presentation(
     subject: &Identity,
     audience: &Did,
@@ -48,7 +48,7 @@ pub fn build_presentation(
     nonce: &[u8],
     issued_at: Timestamp,
     expires_at: Timestamp,
-    claims: Vec<Claim>,
+    claims: Vec<DisclosedClaim>,
 ) -> Presentation {
     let signing = pres_signing_bytes(
         &subject.did(),
@@ -131,6 +131,7 @@ pub struct Check {
 /// (issuer authorized for the category) or **unrevoked** — those arrive in Phase 3. Treat
 /// `accepted` as *authentic*, not *authoritative*.
 #[derive(Clone, Debug, Serialize)]
+#[must_use = "the `accepted` verdict must be inspected; dropping a report ignores the result"]
 pub struct VerificationReport {
     pub accepted: bool,
     pub checks: Vec<Check>,
@@ -145,13 +146,28 @@ fn check(checks: &mut Vec<Check>, name: &str, passed: bool, detail: impl Into<St
 }
 
 /// Verify a presentation offline. `audience` is the verifier's own did; `now` the current
-/// time; `nonce_already_seen` lets a caller enforce single-use nonces (Phase 4 stores them).
+/// time; `nonce_already_seen` lets a caller enforce single-use nonces (see [`crate::nonce`]).
 pub fn verify_presentation(
     p: &Presentation,
     audience: &Did,
     now: Timestamp,
     anchor: &impl TrustAnchor,
     nonce_already_seen: bool,
+) -> Result<VerificationReport> {
+    verify_presentation_with_predicates(p, audience, now, anchor, nonce_already_seen, &[])
+}
+
+/// As [`verify_presentation`], plus the verifier's `predicates`. Each predicate is satisfied
+/// only by a claim that **already passed every check** (authenticity, accreditation,
+/// revocation, validity) — so a predicate can only *narrow* acceptance, never grant it — and
+/// the ordinal it reads is the issuer-attested, schema-pinned value, never inferred.
+pub fn verify_presentation_with_predicates(
+    p: &Presentation,
+    audience: &Did,
+    now: Timestamp,
+    anchor: &impl TrustAnchor,
+    nonce_already_seen: bool,
+    predicates: &[PredicateRequest],
 ) -> Result<VerificationReport> {
     let mut checks = Vec::new();
     let subject_vk = verifying_key_from_hex(&p.subject_key)?;
@@ -215,28 +231,66 @@ pub fn verify_presentation(
         String::new(),
     );
 
+    let mut outcomes = Vec::new();
     for claim in &p.claims {
-        verify_one_claim(&mut checks, claim, &p.subject_id, now, anchor);
+        if let Some(outcome) = verify_one_claim(&mut checks, claim, &p.subject_id, now, anchor) {
+            outcomes.push(outcome);
+        }
     }
+    evaluate_predicates(&mut checks, predicates, &outcomes);
 
     let accepted = checks.iter().all(|c| c.passed);
     Ok(VerificationReport { accepted, checks })
 }
 
+/// A claim that authenticated, with whether it passed *every* trust check (validity,
+/// accreditation, revocation) — the precondition a predicate may ride on.
+struct ClaimOutcome {
+    category: String,
+    schema_id: String,
+    verified: VerifiedDisclosure,
+    fully_valid: bool,
+}
+
+/// Evaluate each predicate against the claims that fully passed. A predicate holds only if some
+/// fully-valid claim of the right category proves the field and satisfies the comparison;
+/// a scale-version mismatch fails closed.
+fn evaluate_predicates(
+    checks: &mut Vec<Check>,
+    predicates: &[PredicateRequest],
+    outcomes: &[ClaimOutcome],
+) {
+    for req in predicates {
+        let satisfied = outcomes.iter().any(|o| predicate_holds(req, o));
+        check(checks, "predicate satisfied", satisfied, req.label());
+    }
+}
+
+fn predicate_holds(req: &PredicateRequest, o: &ClaimOutcome) -> bool {
+    if !o.fully_valid || o.category != req.category {
+        return false;
+    }
+    if let Some(scale) = &req.scale_version {
+        if &o.schema_id != scale {
+            return false; // issuer/verifier disagree on the ordinal scale → fail closed
+        }
+    }
+    match o.verified.value(&req.field) {
+        Some(value) => evaluate(req.op, value, &req.bound).unwrap_or(false),
+        None => false,
+    }
+}
+
 fn verify_one_claim(
     checks: &mut Vec<Check>,
-    claim: &Claim,
+    claim: &DisclosedClaim,
     presenter: &Did,
     now: Timestamp,
     anchor: &impl TrustAnchor,
-) {
+) -> Option<ClaimOutcome> {
     let id = claim.claim_id().as_str().to_string();
-    check(
-        checks,
-        "claim subject matches presenter",
-        &claim.subject_id == presenter,
-        id,
-    );
+    let subject_ok = claim.subject_id() == presenter;
+    check(checks, "claim subject matches presenter", subject_ok, id);
 
     let Some(issuer_vk) = anchor.issuer_key(claim.issuer_id()) else {
         check(
@@ -245,54 +299,70 @@ fn verify_one_claim(
             false,
             format!("unknown issuer {}", claim.issuer_id()),
         );
-        return;
+        return None;
     };
     match claim.verify(&issuer_vk) {
-        Ok(verified) => authenticated_claim_checks(checks, claim, &verified, now, anchor),
-        Err(reject) => check(checks, "claim authentic", false, reject.to_string()),
+        Ok(verified) => {
+            let trusted = authenticated_claim_checks(checks, claim, &verified, now, anchor);
+            Some(ClaimOutcome {
+                category: claim.category().to_string(),
+                schema_id: claim.schema_id.clone(),
+                verified,
+                fully_valid: subject_ok && trusted,
+            })
+        }
+        Err(reject) => {
+            check(checks, "claim authentic", false, reject.to_string());
+            None
+        }
     }
 }
 
-/// Checks that only make sense once a claim's signature is valid: validity window, issuer
-/// accreditation (when the category requires it), and revocation status.
+/// Checks that only make sense once a disclosure's signature and every field proof are valid:
+/// which fields were proven, the validity window, issuer accreditation (when the category
+/// requires it), and revocation status. Returns whether all of those trust checks passed.
 fn authenticated_claim_checks(
     checks: &mut Vec<Check>,
-    claim: &Claim,
-    verified: &VerifiedClaim,
+    claim: &DisclosedClaim,
+    verified: &VerifiedDisclosure,
     now: Timestamp,
     anchor: &impl TrustAnchor,
-) {
+) -> bool {
     let id = claim.claim_id().as_str().to_string();
-    let category = claim.category();
+    let category = verified.category();
     check(checks, "claim authentic", true, id.clone());
-    check(
-        checks,
-        "claim within validity",
-        verified.active_at(now),
-        String::new(),
-    );
+    for key in verified.revealed_keys() {
+        check(
+            checks,
+            "field proven against body_root",
+            true,
+            key.to_string(),
+        );
+    }
+    let within = verified.active_at(now);
+    check(checks, "claim within validity", within, String::new());
     let standing = anchor.standing(claim.issuer_id(), category, now);
-    if standing.accreditation_required {
+    let accredited_ok = if standing.accreditation_required {
         let detail = if standing.accredited {
             format!("accredited for {category}")
         } else {
             format!("NOT accredited for {category} (self-asserted)")
         };
         check(checks, "issuer accredited", standing.accredited, detail);
-    }
-    check(
-        checks,
-        "claim not revoked",
-        !anchor.is_revoked(claim.claim_id(), now),
-        id,
-    );
+        standing.accredited
+    } else {
+        true
+    };
+    let not_revoked = !anchor.is_revoked(claim.claim_id(), now);
+    check(checks, "claim not revoked", not_revoked, id);
+    within && accredited_ok && not_revoked
 }
 
 fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {
     aion_trust_core::encoding::from_hex(nonce_hex)
 }
 
-#[allow(clippy::too_many_arguments)] // mirrors the signed fields; grouping would obscure them
+// Seven args mirror the signed fields; grouping them into a struct would obscure the 1:1 binding.
 fn pres_signing_bytes(
     subject: &Did,
     audience: &Did,
@@ -300,7 +370,7 @@ fn pres_signing_bytes(
     nonce: &[u8],
     issued_at: Timestamp,
     expires_at: Timestamp,
-    claims: &[Claim],
+    claims: &[DisclosedClaim],
 ) -> Vec<u8> {
     let mut w = SigningWriter::new(PRES_DOMAIN);
     w.field(subject.as_bytes())
@@ -366,5 +436,240 @@ mod tests {
         assert!(dir
             .get(&Did::from_string("did:aion:nobody".into()))
             .is_none());
+    }
+
+    // ── Predicate verification (package-local, so the mutation gate covers this file) ──
+
+    use crate::bodies::EducationBody;
+    use crate::claim::{Claim, Validity};
+    use crate::disclosure::FieldSelector;
+    use crate::predicate::PredicateOp;
+    use crate::ClaimBody;
+    use aion_context::crypto::VerifyingKey;
+
+    /// A controllable anchor: recognizes one issuer and lets a test dictate accreditation and
+    /// revocation independently, so every `fully_valid` branch is reachable here.
+    struct MockAnchor {
+        vk: VerifyingKey,
+        accredited: bool,
+        required: bool,
+        revoked: bool,
+    }
+
+    impl TrustAnchor for MockAnchor {
+        fn issuer_key(&self, _issuer: &Did) -> Option<VerifyingKey> {
+            Some(self.vk)
+        }
+        fn standing(&self, _issuer: &Did, _category: &str, _now: Timestamp) -> IssuerStanding {
+            IssuerStanding {
+                accredited: self.accredited,
+                accreditation_required: self.required,
+            }
+        }
+        fn is_revoked(&self, _claim_id: &ClaimId, _now: Timestamp) -> bool {
+            self.revoked
+        }
+    }
+
+    fn edu_claim(issuer: &Identity, subject: &Did, until: Option<Timestamp>) -> Claim {
+        let body = ClaimBody::Education(EducationBody {
+            institution: "State U".into(),
+            credential: "M.S.".into(),
+            conferred: "2020".into(),
+            aion_edu_ref: None,
+            degree_rank: Some(4),
+        });
+        Claim::issue(
+            issuer,
+            subject,
+            Validity {
+                from: Timestamp(0),
+                until,
+            },
+            body,
+        )
+        .unwrap()
+    }
+
+    fn rank_request(op: PredicateOp, bound: i64, scale: Option<&str>) -> PredicateRequest {
+        PredicateRequest {
+            category: "education".into(),
+            field: "degree_rank".into(),
+            op,
+            bound: serde_json::json!(bound),
+            scale_version: scale.map(str::to_string),
+        }
+    }
+
+    /// Build a presentation disclosing only `degree_rank`, signed by `signer`.
+    fn rank_presentation(signer: &Identity, audience: &Did, claim: &Claim) -> Presentation {
+        let d = claim
+            .disclose(&FieldSelector::Only(vec!["degree_rank".into()]))
+            .unwrap();
+        build_presentation(
+            signer,
+            audience,
+            "app",
+            b"nonce-abcdef012345",
+            Timestamp(100),
+            Timestamp(10_000),
+            vec![d],
+        )
+    }
+
+    fn predicate_passed(report: &VerificationReport) -> bool {
+        report
+            .checks
+            .iter()
+            .find(|c| c.name == "predicate satisfied")
+            .map(|c| c.passed)
+            .expect("a predicate check was recorded")
+    }
+
+    fn valid_anchor(issuer: &Identity) -> MockAnchor {
+        MockAnchor {
+            vk: issuer.verifying_key(),
+            accredited: true,
+            required: false,
+            revoked: false,
+        }
+    }
+
+    #[test]
+    fn predicate_satisfied_over_a_valid_claim_is_accepted() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let claim = edu_claim(&issuer, &subject.did(), None);
+        let p = rank_presentation(&subject, &aud, &claim);
+        let req = rank_request(PredicateOp::Ge, 3, Some("aion-trust/education/v1"));
+        let r = verify_presentation_with_predicates(
+            &p,
+            &aud,
+            Timestamp(200),
+            &valid_anchor(&issuer),
+            false,
+            &[req],
+        )
+        .unwrap();
+        assert!(r.accepted, "checks: {:?}", r.checks);
+        assert!(predicate_passed(&r));
+    }
+
+    #[test]
+    fn predicate_below_threshold_is_rejected() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let claim = edu_claim(&issuer, &subject.did(), None);
+        let p = rank_presentation(&subject, &aud, &claim);
+        let req = rank_request(PredicateOp::Ge, 5, None); // require doctorate; holder is 4
+        let r = verify_presentation_with_predicates(
+            &p,
+            &aud,
+            Timestamp(200),
+            &valid_anchor(&issuer),
+            false,
+            &[req],
+        )
+        .unwrap();
+        assert!(!r.accepted);
+        assert!(!predicate_passed(&r));
+    }
+
+    #[test]
+    fn predicate_category_mismatch_is_not_satisfied() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let claim = edu_claim(&issuer, &subject.did(), None);
+        let p = rank_presentation(&subject, &aud, &claim);
+        let mut req = rank_request(PredicateOp::Ge, 3, None);
+        req.category = "employment".into(); // no employment claim present
+        let r = verify_presentation_with_predicates(
+            &p,
+            &aud,
+            Timestamp(200),
+            &valid_anchor(&issuer),
+            false,
+            &[req],
+        )
+        .unwrap();
+        assert!(!predicate_passed(&r));
+    }
+
+    #[test]
+    fn predicate_scale_mismatch_fails_closed() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let claim = edu_claim(&issuer, &subject.did(), None);
+        let p = rank_presentation(&subject, &aud, &claim);
+        let req = rank_request(PredicateOp::Ge, 3, Some("aion-trust/education/v2")); // wrong scale
+        let r = verify_presentation_with_predicates(
+            &p,
+            &aud,
+            Timestamp(200),
+            &valid_anchor(&issuer),
+            false,
+            &[req],
+        )
+        .unwrap();
+        assert!(!predicate_passed(&r));
+    }
+
+    /// A satisfiable predicate must NOT hold when its claim fails a trust check. One mock per
+    /// failure mode reaches every `&&` in `fully_valid`.
+    #[test]
+    fn predicate_never_rides_a_claim_that_failed_a_check() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let req = || rank_request(PredicateOp::Ge, 3, None);
+        let check = |anchor: &MockAnchor, claim: &Claim, now: Timestamp| {
+            let p = rank_presentation(&subject, &aud, claim);
+            let r = verify_presentation_with_predicates(&p, &aud, now, anchor, false, &[req()])
+                .unwrap();
+            (r.accepted, predicate_passed(&r))
+        };
+        let valid = edu_claim(&issuer, &subject.did(), None);
+        // revoked → predicate must not be satisfied
+        let revoked_anchor = MockAnchor {
+            vk: issuer.verifying_key(),
+            accredited: true,
+            required: false,
+            revoked: true,
+        };
+        assert!(!check(&revoked_anchor, &valid, Timestamp(200)).1, "revoked");
+        // required but unaccredited → predicate must not be satisfied
+        let unaccredited = MockAnchor {
+            vk: issuer.verifying_key(),
+            accredited: false,
+            required: true,
+            revoked: false,
+        };
+        assert!(
+            !check(&unaccredited, &valid, Timestamp(200)).1,
+            "unaccredited"
+        );
+        // expired → predicate must not be satisfied
+        let expired = edu_claim(&issuer, &subject.did(), Some(Timestamp(150)));
+        assert!(
+            !check(&valid_anchor(&issuer), &expired, Timestamp(200)).1,
+            "expired"
+        );
+        // wrong subject (someone else presents the claim) → predicate must not be satisfied
+        let mallory = Identity::generate();
+        let p = rank_presentation(&mallory, &aud, &valid);
+        let r = verify_presentation_with_predicates(
+            &p,
+            &aud,
+            Timestamp(200),
+            &valid_anchor(&issuer),
+            false,
+            &[req()],
+        )
+        .unwrap();
+        assert!(!predicate_passed(&r), "wrong subject");
     }
 }

@@ -40,19 +40,51 @@ universities recognize each other in aion-edu.
 
 ## Selective disclosure
 
-The subject controls what each verifier sees. Granularity grows in stages:
+The subject controls what each verifier sees. Two granularities ship today, with an honest
+floor on a third.
 
-- **Phase 1 — claim-level.** Include or exclude whole claims. A Presentation already reveals
-  only the chosen claims, to one audience, for a bounded time.
-- **Phase 2 — field-level.** Disclose specific fields of a claim (`institution`, `credential`,
-  `conferred`) while withholding the rest, with the issuer's signature still verifiable over
-  the disclosed subset (Merkleized claim bodies / selective-disclosure signatures).
-- **Phase 3 — predicate proofs.** Prove a *property* without the value: "degree is a
-  bachelor's or higher", "age ≥ 18", "check performed within 12 months" — zero-knowledge-style
-  proofs that minimize disclosure to exactly the question asked.
+- **Claim-level.** Include or exclude whole claims. A Presentation reveals only the chosen
+  claims, to one audience, for a bounded time.
+- **Field-level (Merkleized bodies).** A claim body is committed not as one hash but as a
+  **Merkle root over its salted field leaves** (`body_root`), which the issuer signs. A subject
+  can then disclose a *subset* of fields — each proven against the signed root by an audit path
+  — while the withheld fields contribute only sibling hashes and stay hidden. Two properties
+  make this safe:
+  - **Hiding.** Every field has its own salt, derived from one per-claim master salt; disclosing
+    one field's salt reveals nothing about the withheld fields.
+  - **No invisible omission.** The full field *set* is a function of the (signed) category, and
+    the leaf count is signed (`field_count`). A verifier therefore knows exactly which fields a
+    claim has and rejects a maliciously *omitted* field (e.g. a withheld `rehire_eligible:
+    false`). Disclosure hides field *values*; it can never silently shrink the field set.
+- **Predicate proofs — data minimization, not zero knowledge.** A predicate ("degree ≥
+  bachelor's", "check performed within 12 months") is answered by disclosing the **minimal,
+  issuer-attested coarse attribute** that settles it — a `degree_rank`, a date — and the verifier
+  evaluates the comparison over that Merkle-proven, signed value. **It hides every other field of
+  the claim, but it does not hide the disclosed attribute itself.** This is genuine
+  minimization, not a zero-knowledge proof: there is no range proof, and equal attributes are
+  **linkable** across presentations. `aion-context` exposes no ZK/range primitive and we never
+  hand-roll cryptography (invariant #4); when such a primitive arrives, the same predicate
+  plumbing can carry a real proof without a wire change.
 
-Every Presentation is **audience-bound and nonce-bound**, so a bundle disclosed to one
-employer cannot be replayed against another.
+Two rules keep predicates sound: a predicate is evaluated **only over a claim that already
+passed every check** (authenticity, accreditation, revocation, validity), so it can only
+*narrow* acceptance and can never launder a revoked or self-asserted claim; and the ordinal
+scale is **issuer-attested and schema-pinned** — the verifier never infers a rank from free
+text, and a scale-version mismatch fails closed.
+
+> **Linkability (not a goal of this layer).** A claim's `claim_id` and `body_root` are stable
+> across presentations, so two colluding verifiers can confirm they hold presentations of the
+> *same* claim regardless of which fields each saw — and disclosing the same coarse attribute
+> twice is itself a correlator. Unlinkability would require per-presentation re-randomization or
+> a zero-knowledge proof, neither of which aion-context yet provides. This layer minimizes *what*
+> is disclosed, not *whether disclosures can be linked*.
+
+Every Presentation is **audience-bound, nonce-bound, and expiring**, so a bundle disclosed to
+one employer cannot be replayed against another. A verifier additionally enforces **single use**
+against its own nonce store, recording a nonce only when a presentation is accepted (a failed
+presentation never burns its nonce). Single-use is atomic per single-process store; a
+multi-replica verifier without a shared store has no cross-replica replay protection, and
+replay/expiry safety assumes an honest, monotonic clock at the verifier.
 
 ## Revocation & validity
 
@@ -74,9 +106,12 @@ need to contact the issuer:
 | **Stolen presentation replayed** | presentations are audience-bound, nonce-bound, and expiring |
 | **Issuer compromised / mistaken** | revocation + epoch rotation; high-assurance categories need K-of-N so one bad accreditor isn't enough |
 | **PII leak from the ledger** | impossible by construction — the ledger holds no PII, only keys/status/schemas |
-| **Coercion to over-disclose** | minimized presentations + predicate proofs reduce what *can* be demanded |
+| **Coercion to over-disclose** | field-level disclosure + predicate (coarse-attribute) proofs reduce what *can* be demanded |
 | **Subject key loss** | signed key-succession records + a recovery policy (Phase 2) |
-| **Tampered claim body** | `body_hash` is signed; any edit breaks the issuer signature |
+| **Tampered claim body** | the signed `body_root` (Merkle) is recomputed from the disclosed fields; any edit breaks the audit path |
+| **Maliciously omitted field** | the field set is fixed by the signed category and `field_count`; a withheld field is detectable, and a verifier can require specific fields |
+| **Predicate laundering** (predicate over a revoked/unaccredited/expired claim) | a predicate is evaluated only over a claim that passed all four checks; it can only narrow acceptance |
+| **Replayed presentation** (same audience) | single-use nonce store, recorded only on accept; bound nonce/audience/expiry stop cross-audience and post-expiry replay |
 | **Sybil issuers** | authority requires accreditation, not mere registration; accreditors stake their keys |
 
 ## Non-goals (for now)

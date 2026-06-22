@@ -3,14 +3,17 @@
 
 use std::path::{Path, PathBuf};
 
+use std::collections::HashMap;
+
 use aion_trust_claims::{
-    build_presentation, verify_presentation, BackgroundCheckBody, Claim, ClaimBody, EmploymentBody,
-    IssuerDirectory, Presentation, Validity,
+    build_presentation, verify_presentation_with_predicates, verify_presentation_with_store,
+    BackgroundCheckBody, Claim, ClaimBody, EmploymentBody, FieldSelector, IssuerDirectory,
+    NonceStore, PredicateOp, PredicateRequest, Presentation, Validity,
 };
 use aion_trust_core::identity::verifying_key_from_hex;
 use aion_trust_core::{Did, Identity, Result, Timestamp, TrustError};
 use clap::{Parser, Subcommand};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
 #[command(
@@ -83,6 +86,10 @@ enum Cmd {
         purpose: String,
         #[arg(long = "claim", required = true)]
         claims: Vec<PathBuf>,
+        /// Reveal only some fields of a claim: `--reveal <claim_id>:field,field`. A claim with
+        /// no `--reveal` entry discloses all its fields. Repeatable.
+        #[arg(long = "reveal")]
+        reveal: Vec<String>,
         #[arg(long, default_value_t = 604_800)]
         expires_in: i64,
         #[arg(long)]
@@ -96,6 +103,14 @@ enum Cmd {
         audience: String,
         #[arg(long = "issuer-key")]
         issuer_keys: Vec<String>,
+        /// Persisted single-use nonce store (JSON). When given, a replayed presentation is
+        /// rejected; the file is created if absent and updated on an accepted presentation.
+        #[arg(long = "nonce-store")]
+        nonce_store: Option<PathBuf>,
+        /// Require a predicate: `--predicate <category>:<field>:<ge|le|gt|lt|eq>:<bound>`
+        /// (optionally `:<schema_id>` to pin an ordinal scale). Repeatable.
+        #[arg(long = "predicate")]
+        predicates: Vec<String>,
     },
 }
 
@@ -207,6 +222,7 @@ fn present(cmd: Cmd) -> Result<()> {
         audience,
         purpose,
         claims,
+        reveal,
         expires_in,
         out,
     } = cmd
@@ -214,9 +230,19 @@ fn present(cmd: Cmd) -> Result<()> {
         unreachable!()
     };
     let subject = load_identity(&subject)?;
-    let mut loaded = Vec::with_capacity(claims.len());
+    let selectors = parse_reveal(&reveal)?;
+    let mut disclosed = Vec::with_capacity(claims.len());
     for path in &claims {
-        loaded.push(read_json::<Claim>(path)?);
+        let claim = read_json::<Claim>(path)?;
+        let selector = selectors
+            .get(claim.claim_id().as_str())
+            .cloned()
+            .unwrap_or(FieldSelector::All);
+        disclosed.push(
+            claim
+                .disclose(&selector)
+                .map_err(|e| TrustError::Decode(format!("disclose failed: {e}")))?,
+        );
     }
     let now = Timestamp::now();
     // 24-byte nonce (two 12-byte CSPRNG draws) — over the verifier's 16-byte floor.
@@ -230,9 +256,62 @@ fn present(cmd: Cmd) -> Result<()> {
         &nonce,
         now,
         now.plus_seconds(expires_in),
-        loaded,
+        disclosed,
     );
     emit(&presentation, out)
+}
+
+/// Parse `--predicate <category>:<field>:<op>:<bound>[:<schema_id>]` entries.
+fn parse_predicates(entries: &[String]) -> Result<Vec<PredicateRequest>> {
+    let mut out = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let parts: Vec<&str> = entry.split(':').collect();
+        let [category, field, op, bound, rest @ ..] = parts.as_slice() else {
+            return Err(TrustError::Decode(format!(
+                "--predicate needs <category>:<field>:<op>:<bound>: {entry}"
+            )));
+        };
+        out.push(PredicateRequest {
+            category: (*category).to_string(),
+            field: (*field).to_string(),
+            op: parse_op(op)?,
+            bound: parse_bound(bound),
+            scale_version: rest.first().map(|s| (*s).to_string()),
+        });
+    }
+    Ok(out)
+}
+
+fn parse_op(op: &str) -> Result<PredicateOp> {
+    match op {
+        "ge" => Ok(PredicateOp::Ge),
+        "le" => Ok(PredicateOp::Le),
+        "gt" => Ok(PredicateOp::Gt),
+        "lt" => Ok(PredicateOp::Lt),
+        "eq" => Ok(PredicateOp::Eq),
+        other => Err(TrustError::Decode(format!("unknown predicate op: {other}"))),
+    }
+}
+
+/// A bound is a number if it parses as one, else a (date/text) string.
+fn parse_bound(bound: &str) -> serde_json::Value {
+    match bound.parse::<i64>() {
+        Ok(n) => serde_json::Value::from(n),
+        Err(_) => serde_json::Value::from(bound),
+    }
+}
+
+/// Parse `--reveal <claim_id>:field,field` entries into a per-claim field selector.
+fn parse_reveal(entries: &[String]) -> Result<HashMap<String, FieldSelector>> {
+    let mut map = HashMap::new();
+    for entry in entries {
+        let (id, fields) = entry
+            .split_once(':')
+            .ok_or_else(|| TrustError::Decode(format!("--reveal needs <id>:<fields>: {entry}")))?;
+        let keys: Vec<String> = fields.split(',').map(|s| s.trim().to_string()).collect();
+        map.insert(id.to_string(), FieldSelector::Only(keys));
+    }
+    Ok(map)
 }
 
 fn verify(cmd: Cmd) -> Result<()> {
@@ -240,6 +319,8 @@ fn verify(cmd: Cmd) -> Result<()> {
         presentation,
         audience,
         issuer_keys,
+        nonce_store,
+        predicates,
     } = cmd
     else {
         unreachable!()
@@ -249,13 +330,19 @@ fn verify(cmd: Cmd) -> Result<()> {
     for key in &issuer_keys {
         directory.register(verifying_key_from_hex(key)?);
     }
-    let report = verify_presentation(
-        &p,
-        &Did::from_string(audience),
-        Timestamp::now(),
-        &directory,
-        false,
-    )?;
+    let audience = Did::from_string(audience);
+    let now = Timestamp::now();
+    let preds = parse_predicates(&predicates)?;
+    let report = match nonce_store {
+        Some(path) => {
+            let mut store = JsonFileNonceStore::load(&path)?;
+            let r =
+                verify_presentation_with_store(&p, &audience, now, &directory, &mut store, &preds)?;
+            store.save(&path)?;
+            r
+        }
+        None => verify_presentation_with_predicates(&p, &audience, now, &directory, false, &preds)?,
+    };
     for c in &report.checks {
         let mark = if c.passed { "✓" } else { "✗" };
         println!(
@@ -277,6 +364,52 @@ fn verify(cmd: Cmd) -> Result<()> {
         }
     );
     std::process::exit(if report.accepted { 0 } else { 1 });
+}
+
+/// A file-backed [`NonceStore`] for the CLI demo: the verifier remembers accepted
+/// `(audience, nonce)` pairs across runs, so a replayed presentation is rejected. Persistence
+/// (and any expiry-based pruning) is a deployment concern; this keeps every entry.
+#[derive(Default, Serialize, Deserialize)]
+struct JsonFileNonceStore {
+    seen: Vec<NonceRecord>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct NonceRecord {
+    audience: String,
+    nonce: String,
+    expires_at: i64,
+}
+
+impl JsonFileNonceStore {
+    fn load(path: &Path) -> Result<Self> {
+        if path.is_file() {
+            Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)
+        } else {
+            Ok(Self::default())
+        }
+    }
+
+    fn save(&self, path: &Path) -> Result<()> {
+        std::fs::write(path, serde_json::to_string_pretty(self)?)?;
+        Ok(())
+    }
+}
+
+impl NonceStore for JsonFileNonceStore {
+    fn seen(&self, audience: &Did, nonce: &str) -> bool {
+        self.seen
+            .iter()
+            .any(|r| r.audience == audience.as_str() && r.nonce == nonce)
+    }
+
+    fn record(&mut self, audience: &Did, nonce: &str, expires_at: Timestamp) {
+        self.seen.push(NonceRecord {
+            audience: audience.as_str().to_string(),
+            nonce: nonce.to_string(),
+            expires_at: expires_at.0,
+        });
+    }
 }
 
 /// Load an identity from a hex secret, or from a file containing one.

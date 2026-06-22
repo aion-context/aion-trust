@@ -107,6 +107,14 @@ struct PolicyRule {
 
 /// The verifier's federation state: recognized issuers, accreditor keys, accreditation records,
 /// per-category K-of-N policy, revocations, and the current epoch.
+///
+/// **Epoch-freeze contract.** Accreditation and revocation are scoped to `self.epoch`, which is
+/// ambient state set by [`Registry::set_epoch`], not the `now` passed to the verifier. A single
+/// verdict must therefore be computed at one consistent epoch: do **not** call `set_epoch`
+/// concurrently with a `verify_presentation` over this registry, and freeze the epoch for the
+/// duration of a verification. The reference verifier is single-threaded and synchronous, so
+/// this holds by construction; a shared/concurrent deployment must enforce it (as the nonce
+/// store documents its own atomicity contract).
 #[derive(Default)]
 pub struct Registry {
     issuer_keys: HashMap<Did, VerifyingKey>,
