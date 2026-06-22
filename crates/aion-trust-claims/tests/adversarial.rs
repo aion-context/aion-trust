@@ -46,7 +46,12 @@ fn setup() -> Setup {
     }
 }
 
-fn present(s: &Setup, signer: &Identity, claims: Vec<Claim>) -> Presentation {
+/// Disclose every field of a claim — the full-disclosure equivalent used by most tests.
+fn disclosed(claim: &Claim) -> DisclosedClaim {
+    claim.disclose(&FieldSelector::All).expect("disclose")
+}
+
+fn present(s: &Setup, signer: &Identity, claims: Vec<DisclosedClaim>) -> Presentation {
     build_presentation(
         signer,
         &s.verifier,
@@ -65,7 +70,7 @@ fn failed(report: &VerificationReport, name: &str) -> bool {
 #[test]
 fn happy_path_is_accepted() {
     let s = setup();
-    let p = present(&s, &s.subject, vec![s.claim.clone()]);
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
     let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
     assert!(r.accepted, "checks: {:?}", r.checks);
 }
@@ -73,7 +78,7 @@ fn happy_path_is_accepted() {
 #[test]
 fn json_round_trip_still_verifies() {
     let s = setup();
-    let p = present(&s, &s.subject, vec![s.claim.clone()]);
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
     let wire = serde_json::to_string(&p).unwrap();
     let parsed: Presentation = serde_json::from_str(&wire).unwrap();
     let r = verify_presentation(&parsed, &s.verifier, s.now, &s.dir, false).unwrap();
@@ -81,13 +86,20 @@ fn json_round_trip_still_verifies() {
 }
 
 #[test]
-fn tampered_body_is_rejected() {
+fn tampered_disclosed_field_is_rejected() {
     let s = setup();
-    let mut v = serde_json::to_value(&s.claim).unwrap();
-    v["body"]["title"] = json!("Chief Executive Officer");
-    let tampered: Claim = serde_json::from_value(v).unwrap();
-    let p = present(&s, &s.subject, vec![tampered]);
-    let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
+    // Build a real presentation, then flip a disclosed field's value on the wire. The Merkle
+    // proof no longer recomputes the signed body_root, so authenticity fails.
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
+    let mut v = serde_json::to_value(&p).unwrap();
+    let fields = v["claims"][0]["fields"].as_array_mut().unwrap();
+    for f in fields.iter_mut() {
+        if f["key"] == json!("title") {
+            f["value"] = json!("Chief Executive Officer");
+        }
+    }
+    let tampered: Presentation = serde_json::from_value(v).unwrap();
+    let r = verify_presentation(&tampered, &s.verifier, s.now, &s.dir, false).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "claim authentic"));
 }
@@ -104,7 +116,7 @@ fn forged_claim_signature_is_rejected() {
         .collect();
     v["issuer_signature"] = json!(bad);
     let forged: Claim = serde_json::from_value(v).unwrap();
-    let p = present(&s, &s.subject, vec![forged]);
+    let p = present(&s, &s.subject, vec![disclosed(&forged)]);
     let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "claim authentic"));
@@ -114,7 +126,7 @@ fn forged_claim_signature_is_rejected() {
 fn presenting_another_subjects_claim_is_rejected() {
     let s = setup();
     let mallory = Identity::generate();
-    let p = present(&s, &mallory, vec![s.claim.clone()]);
+    let p = present(&s, &mallory, vec![disclosed(&s.claim)]);
     let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "claim subject matches presenter"));
@@ -124,7 +136,7 @@ fn presenting_another_subjects_claim_is_rejected() {
 fn unknown_issuer_is_not_accepted() {
     let s = setup();
     let empty = IssuerDirectory::new();
-    let p = present(&s, &s.subject, vec![s.claim.clone()]);
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
     let r = verify_presentation(&p, &s.verifier, s.now, &empty, false).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "issuer recognized"));
@@ -133,7 +145,7 @@ fn unknown_issuer_is_not_accepted() {
 #[test]
 fn wrong_audience_is_rejected() {
     let s = setup();
-    let p = present(&s, &s.subject, vec![s.claim.clone()]);
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
     let other = Identity::generate().did();
     let r = verify_presentation(&p, &other, s.now, &s.dir, false).unwrap();
     assert!(!r.accepted);
@@ -150,7 +162,7 @@ fn expired_presentation_is_rejected() {
         b"nonce-padding-0001",
         s.now,
         s.now.plus_seconds(10),
-        vec![s.claim.clone()],
+        vec![disclosed(&s.claim)],
     );
     let r = verify_presentation(&p, &s.verifier, s.now.plus_seconds(100), &s.dir, false).unwrap();
     assert!(!r.accepted);
@@ -160,7 +172,7 @@ fn expired_presentation_is_rejected() {
 #[test]
 fn replayed_nonce_is_rejected() {
     let s = setup();
-    let p = present(&s, &s.subject, vec![s.claim.clone()]);
+    let p = present(&s, &s.subject, vec![disclosed(&s.claim)]);
     let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, true).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "nonce fresh (not replayed)"));
@@ -186,7 +198,7 @@ fn claim_outside_its_validity_window_is_rejected() {
         b"nonce-padding-0002",
         now,
         now.plus_seconds(60),
-        vec![claim],
+        vec![disclosed(&claim)],
     );
     let r = verify_presentation(&p, &verifier, now, &dir, false).unwrap();
     assert!(!r.accepted);
@@ -212,11 +224,26 @@ fn short_nonce_is_rejected() {
         b"short",
         s.now,
         s.now.plus_seconds(3600),
-        vec![s.claim.clone()],
+        vec![disclosed(&s.claim)],
     );
     let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
     assert!(!r.accepted);
     assert!(failed(&r, "nonce sufficiently long"));
+}
+
+#[test]
+fn duplicate_claim_in_a_presentation_still_verifies() {
+    // A presentation listing the same disclosed claim twice: the subject signature binds both
+    // ids (consistently), and each copy verifies on its own, so the bundle is accepted — a
+    // duplicate is harmless, not a forgery. This pins the defined behavior against drift.
+    let s = setup();
+    let p = present(
+        &s,
+        &s.subject,
+        vec![disclosed(&s.claim), disclosed(&s.claim)],
+    );
+    let r = verify_presentation(&p, &s.verifier, s.now, &s.dir, false).unwrap();
+    assert!(r.accepted, "checks: {:?}", r.checks);
 }
 
 #[test]

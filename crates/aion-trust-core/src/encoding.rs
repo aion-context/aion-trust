@@ -72,6 +72,12 @@ impl SigningWriter {
         self.field(&v.to_be_bytes())
     }
 
+    /// Append an unsigned 32-bit integer as a fixed 4-byte field. Distinct from [`Self::int`]
+    /// (8 bytes), so a `u32` index and an `i64` are never confusable in the signed bytes.
+    pub fn u32(&mut self, v: u32) -> &mut Self {
+        self.field(&v.to_be_bytes())
+    }
+
     pub fn into_bytes(self) -> Vec<u8> {
         self.buf
     }
@@ -135,6 +141,36 @@ mod tests {
             w.into_bytes()
         };
         assert_ne!(join(b"ab", b"c"), join(b"a", b"bc"));
+    }
+
+    #[test]
+    fn signing_writer_u32_is_four_byte_big_endian_and_distinct_from_int() {
+        let mut w = SigningWriter::new(b"d");
+        w.u32(1);
+        // domain "d" (len 1) then u32(1) as a 4-byte field
+        assert_eq!(
+            w.into_bytes(),
+            vec![0, 0, 0, 1, b'd', 0, 0, 0, 4, 0, 0, 0, 1]
+        );
+        // big-endian, not little: u32(1) != u32(256)
+        let one = {
+            let mut w = SigningWriter::new(b"d");
+            w.u32(1);
+            w.into_bytes()
+        };
+        let two_fifty_six = {
+            let mut w = SigningWriter::new(b"d");
+            w.u32(256);
+            w.into_bytes()
+        };
+        assert_ne!(one, two_fifty_six);
+        // a u32(1) (4-byte field) is never the same bytes as an int(1) (8-byte field)
+        let int_one = {
+            let mut w = SigningWriter::new(b"d");
+            w.int(1);
+            w.into_bytes()
+        };
+        assert_ne!(one, int_one);
     }
 
     #[test]

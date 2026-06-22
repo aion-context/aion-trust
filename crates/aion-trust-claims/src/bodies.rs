@@ -27,6 +27,12 @@ pub struct EducationBody {
     pub conferred: String,
     /// Content hash of the originating aion-edu sealed diploma, if imported.
     pub aion_edu_ref: Option<String>,
+    /// An **issuer-attested** ordinal level on the scale pinned by this category's `schema_id`
+    /// (0 none · 1 secondary · 2 associate · 3 bachelor · 4 master · 5 doctorate). It exists so
+    /// a subject can answer "degree ≥ bachelor's" by disclosing only this coarse rank, without
+    /// the exact `credential`. The verifier never derives a rank from free text — it trusts
+    /// only this signed value (see [`crate::predicate`]).
+    pub degree_rank: Option<u8>,
 }
 
 /// A professional certification / license — attested by the certifying authority.
@@ -102,6 +108,47 @@ impl ClaimBody {
         }
     }
 
+    /// The canonical field-key set for a category, in JCS (sorted) order — derived from the
+    /// body type, not a registry. A verifier knows the category (a signed scalar), so it knows
+    /// exactly which fields a claim has and can detect a maliciously *omitted* field and check
+    /// that each disclosed field's key matches the expected key at its leaf index. Returns
+    /// `None` for an unknown category. Kept in lockstep with the actual serialization by the
+    /// `field_keys_match_serialization` gate test.
+    pub fn field_keys_for_category(category: &str) -> Option<&'static [&'static str]> {
+        let keys: &'static [&'static str] = match category {
+            "employment" => &[
+                "employer",
+                "employment_type",
+                "end",
+                "rehire_eligible",
+                "start",
+                "title",
+            ],
+            "education" => &[
+                "aion_edu_ref",
+                "conferred",
+                "credential",
+                "degree_rank",
+                "institution",
+            ],
+            "certification" => &["authority", "credential_no", "expires", "issued", "name"],
+            "background_check" => &[
+                "fcra_compliant",
+                "jurisdiction",
+                "performed",
+                "provider",
+                "result",
+                "scope",
+                "valid_until",
+            ],
+            "identity" => &["assurance", "method", "verified"],
+            "reference" => &["given", "relationship", "statement_hash"],
+            "skill" => &["level", "skill"],
+            _ => return None,
+        };
+        Some(keys)
+    }
+
     /// The versioned schema id for this category — signed, so the version can't be tampered.
     pub fn schema_id(&self) -> &'static str {
         match self {
@@ -117,10 +164,10 @@ impl ClaimBody {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
-    fn one_of_each() -> Vec<(ClaimBody, &'static str, &'static str)> {
+    pub(crate) fn one_of_each() -> Vec<(ClaimBody, &'static str, &'static str)> {
         let s = String::new;
         vec![
             (
@@ -141,6 +188,7 @@ mod tests {
                     credential: s(),
                     conferred: s(),
                     aion_edu_ref: None,
+                    degree_rank: None,
                 }),
                 "education",
                 "aion-trust/education/v1",
@@ -207,5 +255,22 @@ mod tests {
             let json = serde_json::to_value(&body).unwrap();
             assert_eq!(json["claim_type"], category);
         }
+    }
+
+    #[test]
+    fn field_keys_known_for_every_category_and_sorted() {
+        for (body, category, _) in one_of_each() {
+            let keys = ClaimBody::field_keys_for_category(category)
+                .unwrap_or_else(|| panic!("no field keys for {category}"));
+            assert!(!keys.is_empty());
+            // declared in JCS (sorted) order
+            let mut sorted = keys.to_vec();
+            sorted.sort_unstable();
+            assert_eq!(keys.to_vec(), sorted, "{category} keys not sorted");
+            // the type tag is never a disclosable field
+            assert!(!keys.contains(&"claim_type"));
+            let _ = body; // body only used to enumerate categories
+        }
+        assert!(ClaimBody::field_keys_for_category("nonsense").is_none());
     }
 }

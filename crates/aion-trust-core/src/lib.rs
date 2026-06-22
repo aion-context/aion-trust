@@ -8,6 +8,7 @@ pub mod encoding;
 pub mod error;
 pub mod id;
 pub mod identity;
+pub mod merkle;
 pub mod time;
 
 pub use error::{Result, TrustError};

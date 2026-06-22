@@ -83,24 +83,31 @@ This yields three properties that a database-backed "verification service" canno
 ### What gets signed
 
 ```
-Claim          = issuer signs over { subject_id, type, schema_id, body_hash, validity, claim_id }
-                 (body, containing PII, travels with the claim — never to the ledger)
+Claim          = issuer signs over { subject_id, type, schema_id, body_root, field_count, validity, claim_id }
+                 body_root = Merkle root over the body's salted field leaves
+                 (body, containing PII, travels with the claim in the wallet — never to the ledger)
 Ledger record  = { claim_id, status: issued|revoked, epoch }          ← no PII
-Presentation   = subject signs over { verifier_id, nonce, expiry, [claim refs + disclosed bodies] }
+Presentation   = subject signs over { verifier_id, nonce, expiry, [claim_id…] }
+                 each disclosed claim carries only the revealed fields + their Merkle proofs
 ```
 
-Selective disclosure starts coarse (include/exclude whole claims) and has a clear path to
-fine-grained, privacy-preserving proofs (disclose "degree = B.S." or "age ≥ 18" without the
-surrounding fields) — see [`docs/TRUST-MODEL.md`](TRUST-MODEL.md#selective-disclosure).
+Selective disclosure is **field-level**: a subject discloses a subset of a claim's fields, each
+proven against the issuer-signed `body_root`, with the field set fixed by the signed category so
+an omitted field is detectable. Predicate questions ("degree ≥ bachelor's") are answered by
+disclosing a minimal, issuer-attested coarse attribute — **data minimization, not zero
+knowledge** (no range primitive exists in aion-context, and we never hand-roll crypto). The
+**wallet is the sole place a body is read to build a disclosure**, so PII never leaves storage
+except in a presentation the subject built. See
+[`docs/TRUST-MODEL.md`](TRUST-MODEL.md#selective-disclosure).
 
 ## Verification flow
 
 When a verifier receives a Presentation, it checks, entirely offline against aion-context:
 
 1. **Presentation binding** — signed by the subject, addressed to *this* verifier, unexpired,
-   nonce unused (anti-replay).
-2. **For each claim** — issuer signature valid; `subject_id` matches; `body` matches the
-   signed `body_hash`.
+   nonce fresh and single-use (anti-replay).
+2. **For each claim** — issuer signature valid; `subject_id` matches; every disclosed field's
+   leaf recomputes the signed `body_root` via its audit path, with no field maliciously omitted.
 3. **Issuer standing** — the issuer is accredited for this claim's category in the current
    epoch.
 4. **Revocation** — the `claim_id`'s status is `issued`, not `revoked`.

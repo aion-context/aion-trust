@@ -42,14 +42,19 @@ Authority, not just authenticity.
 - **Demo:** a background-check provider accredited 2-of-2; an un-accredited "employer" claim
   correctly shown as self-asserted; an accreditation lapse flipping a prior green to amber.
 
-## Phase 4 — Selective disclosure
+## Phase 4 — Selective disclosure  ✅
 
 Privacy as a feature.
 
 - Field-level disclosure (Merkleized claim bodies) so a Presentation can reveal
-  `{institution, credential}` without the rest, signature still intact.
-- Audience/nonce/expiry binding hardened; anti-replay proven.
+  `{institution, credential}` without the rest, signature still intact — with the field set
+  fixed by the signed category so a maliciously omitted field is detectable.
+- Audience/nonce/expiry binding hardened; a single-use nonce store proves anti-replay
+  (recorded only on accept; cross-audience, post-expiry, and reuse all rejected).
 - Path-finding for predicate proofs ("degree ≥ bachelor's", "check < 12 months old").
+  **Caveat:** these are *data minimization, not zero-knowledge* — the coarse, issuer-attested
+  attribute is revealed (aion-context has no range primitive; invariant #4 forbids hand-rolling
+  one). The types are shaped so a real ZK proof can drop in without a wire change.
 
 ## Phase 5 — The surfaces
 
