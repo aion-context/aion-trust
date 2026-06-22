@@ -11,6 +11,8 @@ ignore = [
     "RUSTSEC-2026-0162", # pqcrypto (transitive, aion-context)
     "RUSTSEC-2026-0163", # pqcrypto-internals — unmaintained (transitive)
     "RUSTSEC-2026-0166", # pqcrypto-mldsa — unmaintained (transitive)
+    "RUSTSEC-2026-0186", # memmap2 (transitive via aion-context) — "unsound", not a known-exploitable
+                         # vuln; upstream's call. Re-review when aion-context bumps memmap2.
 ]
 
 [licenses]

@@ -67,15 +67,17 @@ Make it real, the way aion-edu's web app did.
 - **Local single-operator demo** — loopback-bound, in-memory, no persistence; the wallet would
   move to the subject's device in production. See [`WEB-SURFACES.md`](WEB-SURFACES.md).
 
-## Phase 6 — Interop & cost model
+## Phase 6 — Interop & cost model  ✅
 
 Connect outward and quantify the pitch.
 
-- `docs/INTEROP.md` + export/import for **W3C Verifiable Credentials / DIDs**, so artifacts
-  travel beyond this implementation.
-- `docs/COST-MODEL.md`: a parameterized model (checks per hire, fee per check, HR hours,
-  bad-hire rate) turning the savings thesis into numbers.
-- `docs/COMPLIANCE.md`: mapping to FCRA, EEOC, GDPR/CCPA, NIST 800-63.
+- `aion-trust-interop` + [`docs/INTEROP.md`](INTEROP.md): export/import for **W3C Verifiable
+  Credentials / Presentations** and **did:key**, so artifacts travel beyond this implementation.
+  The native aion-trust proof is preserved (data-model + DID interop, not drop-in Data Integrity —
+  the holder can't re-sign as the issuer); round-trip and re-verifiable.
+- [`docs/COST-MODEL.md`](COST-MODEL.md): a parameterized model (checks per hire, fee per check, HR
+  hours, reuse rate, bad-hire rate) turning the savings thesis into numbers.
+- [`docs/COMPLIANCE.md`](COMPLIANCE.md): mapping to FCRA, EEOC, GDPR/CCPA, NIST 800-63.
 
 ---
 

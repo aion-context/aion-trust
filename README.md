@@ -56,9 +56,9 @@ See [`docs/VISION.md`](docs/VISION.md) for the full case and where the savings l
 
 ## Status
 
-**Phases 0–5 complete.** The cryptographic kernel, claims + wallet, accreditation/revocation,
-field-level selective disclosure (+ anti-replay and predicate proofs), and the web surfaces are
-all implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**Phases 0–6 complete.** The cryptographic kernel, claims + wallet, accreditation/revocation,
+field-level selective disclosure (+ anti-replay and predicate proofs), the web surfaces, and W3C
+VC/VP + did:key interop are all implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ### Run the web demo
 
@@ -85,6 +85,9 @@ The CLI also drives the kernel directly: `keygen`, `issue`, `present`, `verify`.
 | [`docs/WORKFLOWS.md`](docs/WORKFLOWS.md) | End-to-end flows: issue, assemble, present, verify, reuse, revoke |
 | [`docs/TRUST-MODEL.md`](docs/TRUST-MODEL.md) | Issuer accreditation, selective disclosure, revocation, threat model |
 | [`docs/WEB-SURFACES.md`](docs/WEB-SURFACES.md) | The Phase 5 web demo: surfaces, routes, and the local-demo privacy guardrails |
+| [`docs/INTEROP.md`](docs/INTEROP.md) | W3C VC/VP & did:key export/import, the native-proof model, SD-JWT/BBS+ comparison |
+| [`docs/COST-MODEL.md`](docs/COST-MODEL.md) | Parameterized savings model with worked examples |
+| [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md) | Mapping to FCRA, EEOC, GDPR/CCPA, NIST 800-63 |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Phases from kernel to web demo to interop |
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Terms of art |
 
