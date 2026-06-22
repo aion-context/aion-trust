@@ -23,3 +23,6 @@
 mutants.out/
 site/
 mutants.out.old/
+
+# raw Playwright recording (regenerable intermediate)
+demo/playwright-video/

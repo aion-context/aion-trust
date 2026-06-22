@@ -1,0 +1,1 @@
+That's the model: verification done once and reused across every application — at zero marginal cost, with fraud designed out. Do the work once. Prove it forever.

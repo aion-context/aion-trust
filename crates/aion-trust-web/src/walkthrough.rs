@@ -29,17 +29,22 @@ pub(crate) async fn page() -> Html<String> {
 <p class="kicker">live · walkthrough</p><h1>Proof, in motion</h1>
 <p class="lede">Watch a verified claim turn red the instant its issuer revokes it — issue → present
 → verify (green) → revoke → the same claim now fails (red). Entirely offline against the registry.</p>
-<div class="panel"><div id="stage" class="stage"></div></div>
-<form method="get" action="/walkthrough"><button class="button" type="submit">Run again ↻</button></form>
+<div class="panel"><div id="stage" class="stage"><p class="stage-empty">Starting the walkthrough…</p></div></div>
+<form method="get" action="/walkthrough"><button class="button ghost" type="submit">Run again ↻</button></form>
 <script>
 const stage = document.getElementById('stage');
+let n = 0;
 const es = new EventSource('/walkthrough/stream');
 es.onmessage = (e) => {
   const a = JSON.parse(e.data);
   if (a.done) { es.close(); return; }
+  const empty = stage.querySelector('.stage-empty');
+  if (empty) empty.remove();
+  n += 1;
   const el = document.createElement('div');
-  el.className = 'act live';
-  el.innerHTML = '<div class="title">' + a.title + '</div><div>' + a.detail + '</div>';
+  el.className = 'act tone-' + (a.tone || 'info');
+  el.innerHTML = '<span class="num">' + n + '</span><div class="title">' + a.title +
+    '</div><div class="body">' + a.detail + '</div>';
   stage.appendChild(el);
 };
 </script>"##;

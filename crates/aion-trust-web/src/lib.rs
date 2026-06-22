@@ -75,24 +75,30 @@ fn router() -> Router {
 
 async fn home() -> Html<String> {
     let body = r#"
-<p class="kicker">aion-trust · proof engine</p>
-<h1>The résumé, replaced by proof.</h1>
-<p class="lede">Each fact about a person is attested once at its source, signed, and from then
-on verifiable by anyone — offline, with no callbacks. Explore the three surfaces, or watch the
-guided walkthrough where a verified claim turns red the instant its issuer revokes it.</p>
-<div class="grid">
-  <a class="panel card" href="/issuer"><h2>Issuer console <span class="arrow">→</span></h2>
-    <p class="lede">Attest a fact and hand the signed claim to the candidate. Accredit issuers; revoke a claim.</p></a>
-  <a class="panel card" href="/wallet"><h2>Candidate wallet <span class="arrow">→</span></h2>
-    <p class="lede">Hold your claims; build a minimized, audience-bound presentation — full claims, chosen fields, or predicate proofs.</p></a>
-  <a class="panel card" href="/verify"><h2>Employer verifier <span class="arrow">→</span></h2>
-    <p class="lede">Check a presentation offline against the registry: binding, authenticity, accreditation, revocation — check by check.</p></a>
-  <a class="panel card" href="/walkthrough"><h2>Live walkthrough <span class="arrow">→</span></h2>
-    <p class="lede">Issue → present → verify (green) → revoke → the same presentation now fails (red).</p></a>
+<section class="hero">
+<p class="kicker">The verifiable résumé</p>
+<h1>A résumé you can prove.</h1>
+<p class="lede">Each fact about a person is attested once, at its source, and signed — then
+verified by anyone, offline, with no phone calls and no callbacks. Verification done once becomes
+an artifact reused across every application. Below are the three parties, each its own room.</p>
+</section>
+<div class="rooms">
+  <a class="room" href="/issuer"><span class="role">Issuer</span><h2>Issuer console</h2>
+    <p>Attest a fact and hand the signed claim to the candidate. Accredit issuers; revoke a claim.</p>
+    <span class="go">/issuer →</span></a>
+  <a class="room" href="/wallet"><span class="role">Candidate</span><h2>Candidate wallet</h2>
+    <p>Hold your claims; build a minimized, audience-bound presentation — full claims, chosen fields, or predicate proofs.</p>
+    <span class="go">/wallet →</span></a>
+  <a class="room" href="/verify"><span class="role">Employer</span><h2>Employer verifier</h2>
+    <p>Check a presentation offline against the registry — binding, authenticity, accreditation, revocation, one check at a time.</p>
+    <span class="go">/verify →</span></a>
+  <a class="room feature" href="/walkthrough"><span class="role">Watch it happen</span><h2>Live walkthrough</h2>
+    <p>Issue → present → verify (green) → the issuer revokes → the same presentation now fails (red), streamed live.</p>
+    <span class="go">/walkthrough →</span></a>
 </div>
-<div class="notice"><strong>Local single-operator demo.</strong> This process holds the
+<div class="notice"><span class="badge ok">scope</span> <span><strong>Local single-operator demo.</strong> This process holds the
 operator's own keys in memory and binds to loopback only — it is not a hosted service and not a
-custody architecture. State resets on restart, or with the button below.</div>
+custody architecture. State resets on restart, or with the button below.</span></div>
 <form class="stack" method="post" action="/api/reset"><button class="button ghost" type="submit">Reset demo state</button></form>
 "#;
     view::page("Home", "/", body)

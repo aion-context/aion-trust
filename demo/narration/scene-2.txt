@@ -1,0 +1,1 @@
+There are three parties, and three rooms. The issuer attests a fact. The candidate holds it. The employer verifies it. No one in the middle — and no central database of people.
