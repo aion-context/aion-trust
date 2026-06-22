@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/aion-trust-core",
     "crates/aion-trust-claims",
+    "crates/aion-trust-registry",
     "crates/aion-trust-wallet",
     "crates/aion-trust-cli",
 ]
@@ -16,6 +17,7 @@ repository = "https://github.com/aion-context/aion-trust"
 [workspace.dependencies]
 aion-trust-core = { path = "crates/aion-trust-core" }
 aion-trust-claims = { path = "crates/aion-trust-claims" }
+aion-trust-registry = { path = "crates/aion-trust-registry" }
 aion-trust-wallet = { path = "crates/aion-trust-wallet" }
 aion-context = { path = "../aion-context" }
 serde = { version = "1", features = ["derive"] }

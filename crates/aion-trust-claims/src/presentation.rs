@@ -11,10 +11,11 @@ use std::collections::HashMap;
 use aion_context::crypto::VerifyingKey;
 use aion_trust_core::encoding::{decode_array, to_hex, SigningWriter};
 use aion_trust_core::identity::verifying_key_from_hex;
-use aion_trust_core::{Did, Identity, Result, Timestamp};
+use aion_trust_core::{ClaimId, Did, Identity, Result, Timestamp};
 use serde::{Deserialize, Serialize};
 
-use crate::claim::Claim;
+use crate::anchor::{IssuerStanding, TrustAnchor};
+use crate::claim::{Claim, VerifiedClaim};
 
 pub const PRES_DOMAIN: &[u8] = b"aion-trust/presentation/v1";
 
@@ -94,6 +95,25 @@ impl IssuerDirectory {
     }
 }
 
+/// The simplest anchor: recognized issuers, but no accreditation and no revocation. A
+/// recognized issuer's claims verify as *authentic*; nothing here makes them *authoritative*.
+impl TrustAnchor for IssuerDirectory {
+    fn issuer_key(&self, issuer: &Did) -> Option<VerifyingKey> {
+        self.keys.get(issuer).cloned()
+    }
+
+    fn standing(&self, _issuer: &Did, _category: &str, _now: Timestamp) -> IssuerStanding {
+        IssuerStanding {
+            accredited: false,
+            accreditation_required: false,
+        }
+    }
+
+    fn is_revoked(&self, _claim_id: &ClaimId, _now: Timestamp) -> bool {
+        false
+    }
+}
+
 /// One verification step and whether it passed.
 #[derive(Clone, Debug, Serialize)]
 pub struct Check {
@@ -130,7 +150,7 @@ pub fn verify_presentation(
     p: &Presentation,
     audience: &Did,
     now: Timestamp,
-    directory: &IssuerDirectory,
+    anchor: &impl TrustAnchor,
     nonce_already_seen: bool,
 ) -> Result<VerificationReport> {
     let mut checks = Vec::new();
@@ -196,7 +216,7 @@ pub fn verify_presentation(
     );
 
     for claim in &p.claims {
-        verify_one_claim(&mut checks, claim, &p.subject_id, now, directory);
+        verify_one_claim(&mut checks, claim, &p.subject_id, now, anchor);
     }
 
     let accepted = checks.iter().all(|c| c.passed);
@@ -208,17 +228,17 @@ fn verify_one_claim(
     claim: &Claim,
     presenter: &Did,
     now: Timestamp,
-    directory: &IssuerDirectory,
+    anchor: &impl TrustAnchor,
 ) {
     let id = claim.claim_id().as_str().to_string();
     check(
         checks,
         "claim subject matches presenter",
         &claim.subject_id == presenter,
-        id.clone(),
+        id,
     );
 
-    let Some(issuer_vk) = directory.get(claim.issuer_id()) else {
+    let Some(issuer_vk) = anchor.issuer_key(claim.issuer_id()) else {
         check(
             checks,
             "issuer recognized",
@@ -227,18 +247,45 @@ fn verify_one_claim(
         );
         return;
     };
-    match claim.verify(issuer_vk) {
-        Ok(verified) => {
-            check(checks, "claim authentic", true, id);
-            check(
-                checks,
-                "claim within validity",
-                verified.active_at(now),
-                String::new(),
-            );
-        }
+    match claim.verify(&issuer_vk) {
+        Ok(verified) => authenticated_claim_checks(checks, claim, &verified, now, anchor),
         Err(reject) => check(checks, "claim authentic", false, reject.to_string()),
     }
+}
+
+/// Checks that only make sense once a claim's signature is valid: validity window, issuer
+/// accreditation (when the category requires it), and revocation status.
+fn authenticated_claim_checks(
+    checks: &mut Vec<Check>,
+    claim: &Claim,
+    verified: &VerifiedClaim,
+    now: Timestamp,
+    anchor: &impl TrustAnchor,
+) {
+    let id = claim.claim_id().as_str().to_string();
+    let category = claim.category();
+    check(checks, "claim authentic", true, id.clone());
+    check(
+        checks,
+        "claim within validity",
+        verified.active_at(now),
+        String::new(),
+    );
+    let standing = anchor.standing(claim.issuer_id(), category, now);
+    if standing.accreditation_required {
+        let detail = if standing.accredited {
+            format!("accredited for {category}")
+        } else {
+            format!("NOT accredited for {category} (self-asserted)")
+        };
+        check(checks, "issuer accredited", standing.accredited, detail);
+    }
+    check(
+        checks,
+        "claim not revoked",
+        !anchor.is_revoked(claim.claim_id(), now),
+        id,
+    );
 }
 
 fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {

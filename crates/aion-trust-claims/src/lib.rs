@@ -7,10 +7,12 @@
 //! subject-signed, audience-bound bundle of claims — the artifact that replaces the résumé —
 //! checked offline by [`verify_presentation`].
 
+pub mod anchor;
 pub mod bodies;
 pub mod claim;
 pub mod presentation;
 
+pub use anchor::{IssuerStanding, TrustAnchor};
 pub use bodies::{
     BackgroundCheckBody, CertificationBody, ClaimBody, EducationBody, EmploymentBody, IdentityBody,
     ReferenceBody, SkillBody,

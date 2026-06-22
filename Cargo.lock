@@ -89,6 +89,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aion-trust-registry"
+version = "0.1.0"
+dependencies = [
+ "aion-context",
+ "aion-trust-claims",
+ "aion-trust-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "aion-trust-wallet"
 version = "0.1.0"
 dependencies = [
