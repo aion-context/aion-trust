@@ -1,0 +1,22 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace hash_body -> Result<[u8; 32], ClaimReject> with Ok([0; 32])
+@@ -181,18 +181,17 @@
+         &self.0.body
+     }
+     pub fn active_at(&self, now: Timestamp) -> bool {
+         self.0.validity.active_at(now)
+     }
+ }
+ 
+ fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {
+-    let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;
+-    Ok(crypto::hash(&bytes))
++    Ok([0; 32]) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ fn signing_bytes(
+     subject: &Did,
+     issuer: &Did,
+     claim_type: &ClaimType,
+     schema: &str,
+     validity: &Validity,

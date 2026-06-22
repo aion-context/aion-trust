@@ -198,3 +198,32 @@ fn pres_signing_bytes(
     }
     w.into_bytes()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aion_trust_core::Identity;
+
+    #[test]
+    fn pres_signing_bytes_is_nonempty_and_binds_fields() {
+        let s = Did::from_string("did:aion:s".into());
+        let a = Did::from_string("did:aion:a".into());
+        let base = pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(1), Timestamp(2), &[]);
+        assert!(!base.is_empty()); // kills pres_signing_bytes -> vec![]
+        let b = Did::from_string("did:aion:b".into());
+        assert_ne!(base, pres_signing_bytes(&s, &b, "purpose", b"nonce", Timestamp(1), Timestamp(2), &[]));
+        assert_ne!(base, pres_signing_bytes(&s, &a, "other", b"nonce", Timestamp(1), Timestamp(2), &[]));
+        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"different", Timestamp(1), Timestamp(2), &[]));
+        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(9), Timestamp(2), &[]));
+        assert_ne!(base, pres_signing_bytes(&s, &a, "purpose", b"nonce", Timestamp(1), Timestamp(9), &[]));
+    }
+
+    #[test]
+    fn issuer_directory_indexes_by_derived_did() {
+        let issuer = Identity::generate();
+        let mut dir = IssuerDirectory::new();
+        dir.register(issuer.verifying_key());
+        assert!(dir.get(&issuer.did()).is_some());
+        assert!(dir.get(&Did::from_string("did:aion:nobody".into())).is_none());
+    }
+}

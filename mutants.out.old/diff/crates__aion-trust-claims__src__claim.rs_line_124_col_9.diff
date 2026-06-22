@@ -1,0 +1,21 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace Claim::issuer_id -> &Did with Box::leak(Box::new(Default::default()))
+@@ -116,17 +116,17 @@
+             body_hash: to_hex(&body_hash),
+             issuer_signature: to_hex(&issuer.sign(&signing)),
+         })
+     }
+ 
+     /// The issuer this claim *claims* to be from — used to resolve the trusted key. Reading
+     /// it does not imply trust; verification still decides.
+     pub fn issuer_id(&self) -> &Did {
+-        &self.issuer_id
++        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     pub fn claim_id(&self) -> &ClaimId {
+         &self.claim_id
+     }
+ 
+     /// Verify this claim against the issuer's trusted key. On success returns a
+     /// [`VerifiedClaim`] — the only way to read the body.

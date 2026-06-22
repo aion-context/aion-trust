@@ -1,0 +1,15 @@
+--- crates/aion-trust-core/src/encoding.rs
++++ replace SigningWriter::into_bytes -> Vec<u8> with vec![0]
+@@ -66,11 +66,11 @@
+     }
+ 
+     /// Append a signed 64-bit integer as a fixed 8-byte field.
+     pub fn int(&mut self, v: i64) -> &mut Self {
+         self.field(&v.to_be_bytes())
+     }
+ 
+     pub fn into_bytes(self) -> Vec<u8> {
+-        self.buf
++        vec![0] /* ~ changed by cargo-mutants ~ */
+     }
+ }

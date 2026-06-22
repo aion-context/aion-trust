@@ -215,3 +215,78 @@ fn signing_bytes(
     w.field(body_hash);
     w.into_bytes()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aion_trust_core::Identity;
+
+    fn body() -> EmploymentBody {
+        EmploymentBody {
+            employer: "Acme".into(),
+            title: "Senior Engineer".into(),
+            employment_type: "full_time".into(),
+            start: "2021-03-01".into(),
+            end: None,
+            rehire_eligible: true,
+        }
+    }
+
+    #[test]
+    fn claim_type_tag_is_stable() {
+        assert_eq!(ClaimType::Employment.tag(), b"employment"); // kills tag -> empty/[0]/[1]
+    }
+
+    #[test]
+    fn reject_messages_are_specific() {
+        assert!(ClaimReject::BodyTampered.to_string().contains("body")); // kills Display -> default
+        assert_ne!(
+            ClaimReject::BadSignature.to_string(),
+            ClaimReject::BodyTampered.to_string()
+        );
+    }
+
+    #[test]
+    fn validity_active_at_boundaries() {
+        let v = Validity { from: Timestamp(10), until: Some(Timestamp(20)) };
+        assert!(!v.active_at(Timestamp(9)));
+        assert!(v.active_at(Timestamp(10)));
+        assert!(v.active_at(Timestamp(20)));
+        assert!(!v.active_at(Timestamp(21)));
+        let open = Validity { from: Timestamp(10), until: None };
+        assert!(open.active_at(Timestamp(1_000)));
+        assert!(!open.active_at(Timestamp(9)));
+    }
+
+    #[test]
+    fn signing_bytes_is_nonempty_and_binds_every_field() {
+        let s = Did::from_string("did:aion:subject".into());
+        let i = Did::from_string("did:aion:issuer".into());
+        let v = Validity { from: Timestamp(1), until: None };
+        let h = [7u8; 32];
+        let base = signing_bytes(&s, &i, &ClaimType::Employment, "schema", &v, &h);
+        assert!(!base.is_empty()); // kills signing_bytes -> vec![]
+        let other = Did::from_string("did:aion:other".into());
+        assert_ne!(base, signing_bytes(&other, &i, &ClaimType::Employment, "schema", &v, &h));
+        assert_ne!(base, signing_bytes(&s, &other, &ClaimType::Employment, "schema", &v, &h));
+        assert_ne!(base, signing_bytes(&s, &i, &ClaimType::Employment, "schema2", &v, &h));
+        let v_from = Validity { from: Timestamp(2), until: None };
+        assert_ne!(base, signing_bytes(&s, &i, &ClaimType::Employment, "schema", &v_from, &h));
+        // open vs until-bounded must differ — pins the Some/None match arm
+        let v_until = Validity { from: Timestamp(1), until: Some(Timestamp(9)) };
+        assert_ne!(base, signing_bytes(&s, &i, &ClaimType::Employment, "schema", &v_until, &h));
+        assert_ne!(base, signing_bytes(&s, &i, &ClaimType::Employment, "schema", &v, &[8u8; 32]));
+    }
+
+    #[test]
+    fn issue_then_verify_exposes_the_body() {
+        let issuer = Identity::generate();
+        let subject = Did::from_string("did:aion:subj".into());
+        let validity = Validity { from: Timestamp(0), until: None };
+        let claim = Claim::issue(&issuer, &subject, validity, body()).unwrap();
+        let verified = claim.verify(&issuer.verifying_key()).expect("verify");
+        assert_eq!(verified.body().title, "Senior Engineer");
+        assert_eq!(verified.subject_id(), &subject);
+        assert_eq!(verified.claim_type(), &ClaimType::Employment);
+    }
+}

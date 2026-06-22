@@ -1,0 +1,21 @@
+--- crates/aion-trust-core/src/identity.rs
++++ replace Identity::did -> Did with Default::default()
+@@ -33,17 +33,17 @@
+     }
+ 
+     pub fn verifying_key(&self) -> VerifyingKey {
+         self.signing_key.verifying_key()
+     }
+ 
+     /// This identity's public did.
+     pub fn did(&self) -> Did {
+-        Did::from_key(&self.verifying_key())
++        Default::default() /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     /// Sign a message, producing a 64-byte Ed25519 signature.
+     pub fn sign(&self, message: &[u8]) -> [u8; 64] {
+         self.signing_key.sign(message)
+     }
+ }
+ 

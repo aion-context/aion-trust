@@ -1,0 +1,25 @@
+--- crates/aion-trust-claims/src/presentation.rs
++++ replace check with ()
+@@ -102,21 +102,17 @@
+ /// The full result of verifying a presentation. `accepted` iff every check passed.
+ #[derive(Clone, Debug, Serialize)]
+ pub struct VerificationReport {
+     pub accepted: bool,
+     pub checks: Vec<Check>,
+ }
+ 
+ fn check(checks: &mut Vec<Check>, name: &str, passed: bool, detail: impl Into<String>) {
+-    checks.push(Check {
+-        name: name.to_string(),
+-        passed,
+-        detail: detail.into(),
+-    });
++    () /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Verify a presentation offline. `audience` is the verifier's own did; `now` the current
+ /// time; `nonce_already_seen` lets a caller enforce single-use nonces (Phase 4 stores them).
+ pub fn verify_presentation(
+     p: &Presentation,
+     audience: &Did,
+     now: Timestamp,

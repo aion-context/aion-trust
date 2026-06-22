@@ -1,0 +1,26 @@
+--- crates/aion-trust-core/src/encoding.rs
++++ replace to_hex -> String with "xyzzy".into()
+@@ -4,22 +4,17 @@
+ //! field and is seeded with a domain tag, so no two distinct messages can ever encode
+ //! to the same byte string (no concatenation collisions, no cross-context replay).
+ 
+ use crate::error::{Result, TrustError};
+ 
+ const HEX: &[u8; 16] = b"0123456789abcdef";
+ 
+ pub fn to_hex(bytes: &[u8]) -> String {
+-    let mut s = String::with_capacity(bytes.len() * 2);
+-    for b in bytes {
+-        s.push(HEX[(b >> 4) as usize] as char);
+-        s.push(HEX[(b & 0x0f) as usize] as char);
+-    }
+-    s
++    "xyzzy".into() /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ pub fn from_hex(s: &str) -> Result<Vec<u8>> {
+     if s.len() % 2 != 0 {
+         return Err(TrustError::Decode("hex length must be even".into()));
+     }
+     let nib = |c: u8| -> Result<u8> {
+         match c {

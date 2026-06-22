@@ -32,7 +32,9 @@ pub fn from_hex(s: &str) -> Result<Vec<u8>> {
     let bytes = s.as_bytes();
     let mut out = Vec::with_capacity(bytes.len() / 2);
     for pair in bytes.chunks_exact(2) {
-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);
+        // `hi * 16 + lo` rather than `(hi << 4) | lo`: arithmetically identical, but every
+        // operator mutation of it is observably wrong (no equivalent-mutant blind spot).
+        out.push(nib(pair[0])? * 16 + nib(pair[1])?);
     }
     Ok(out)
 }
@@ -72,5 +74,84 @@ impl SigningWriter {
 
     pub fn into_bytes(self) -> Vec<u8> {
         self.buf
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hex_known_vectors_and_round_trip() {
+        assert_eq!(to_hex(&[0x00, 0xff, 0xab, 0x10]), "00ffab10");
+        assert_eq!(to_hex(&[]), "");
+        assert_eq!(from_hex("00ffab10").unwrap(), vec![0x00, 0xff, 0xab, 0x10]);
+        // distinct nibbles in distinct positions pin the `hi * 16 + lo` assembly
+        assert_eq!(from_hex("12").unwrap(), vec![0x12]);
+        assert_eq!(from_hex("21").unwrap(), vec![0x21]);
+        // upper- and lower-case both decode (pins the A..=F arm and its arithmetic)
+        assert_eq!(from_hex("FF").unwrap(), vec![0xff]);
+        assert_eq!(from_hex("aF").unwrap(), vec![0xaf]);
+    }
+
+    #[test]
+    fn from_hex_rejects_bad_input() {
+        assert!(from_hex("abc").is_err()); // odd length
+        assert!(from_hex("zz").is_err()); // invalid characters
+        assert!(from_hex("0g").is_err());
+    }
+
+    #[test]
+    fn decode_array_checks_length() {
+        assert_eq!(decode_array::<2>("00ff").unwrap(), [0x00, 0xff]);
+        assert!(decode_array::<2>("00").is_err()); // too short
+        assert!(decode_array::<2>("00ffab").is_err()); // too long
+    }
+
+    #[test]
+    fn signing_writer_exact_encoding() {
+        let mut w = SigningWriter::new(b"dom");
+        w.field(b"x");
+        // domain "dom" (len 3) then field "x" (len 1), each length-prefixed big-endian
+        assert_eq!(w.into_bytes(), vec![0, 0, 0, 3, b'd', b'o', b'm', 0, 0, 0, 1, b'x']);
+    }
+
+    #[test]
+    fn signing_writer_is_content_dependent_and_unambiguous() {
+        let bytes = |f: &[u8]| {
+            let mut w = SigningWriter::new(b"dom");
+            w.field(f);
+            w.into_bytes()
+        };
+        assert_ne!(bytes(b"x"), bytes(b"y"));
+        assert!(!bytes(b"x").is_empty());
+        // length-prefixing prevents concatenation collisions: ("ab","c") != ("a","bc")
+        let join = |a: &[u8], b: &[u8]| {
+            let mut w = SigningWriter::new(b"d");
+            w.field(a).field(b);
+            w.into_bytes()
+        };
+        assert_ne!(join(b"ab", b"c"), join(b"a", b"bc"));
+    }
+
+    #[test]
+    fn signing_writer_int_is_eight_byte_big_endian() {
+        let mut w = SigningWriter::new(b"d");
+        w.int(1);
+        assert_eq!(
+            w.into_bytes(),
+            vec![0, 0, 0, 1, b'd', 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 1]
+        );
+        let pos = {
+            let mut w = SigningWriter::new(b"d");
+            w.int(1);
+            w.into_bytes()
+        };
+        let neg = {
+            let mut w = SigningWriter::new(b"d");
+            w.int(-1);
+            w.into_bytes()
+        };
+        assert_ne!(pos, neg);
     }
 }

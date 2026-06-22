@@ -1,0 +1,21 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace >= with < in Validity::active_at
+@@ -29,17 +29,17 @@
+ #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct Validity {
+     pub from: Timestamp,
+     pub until: Option<Timestamp>,
+ }
+ 
+ impl Validity {
+     pub fn active_at(&self, now: Timestamp) -> bool {
+-        now >= self.from && self.until.is_none_or(|u| now <= u)
++        now < /* ~ changed by cargo-mutants ~ */ self.from && self.until.is_none_or(|u| now <= u)
+     }
+ }
+ 
+ /// The employment claim body — the PII-bearing payload. Never written to the ledger.
+ #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct EmploymentBody {
+     pub employer: String,
+     pub title: String,

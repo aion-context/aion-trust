@@ -1,0 +1,21 @@
+--- crates/aion-trust-core/src/encoding.rs
++++ replace % with + in from_hex
+@@ -13,17 +13,17 @@
+     for b in bytes {
+         s.push(HEX[(b >> 4) as usize] as char);
+         s.push(HEX[(b & 0x0f) as usize] as char);
+     }
+     s
+ }
+ 
+ pub fn from_hex(s: &str) -> Result<Vec<u8>> {
+-    if s.len() % 2 != 0 {
++    if s.len() + /* ~ changed by cargo-mutants ~ */ 2 != 0 {
+         return Err(TrustError::Decode("hex length must be even".into()));
+     }
+     let nib = |c: u8| -> Result<u8> {
+         match c {
+             b'0'..=b'9' => Ok(c - b'0'),
+             b'a'..=b'f' => Ok(c - b'a' + 10),
+             b'A'..=b'F' => Ok(c - b'A' + 10),
+             _ => Err(TrustError::Decode("invalid hex character".into())),

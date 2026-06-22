@@ -1,0 +1,15 @@
+--- crates/aion-trust-core/src/time.rs
++++ replace Timestamp::plus_seconds -> Self with Default::default()
+@@ -14,11 +14,11 @@
+             .duration_since(std::time::UNIX_EPOCH)
+             .map(|d| d.as_secs() as i64)
+             .unwrap_or(0);
+         Timestamp(secs)
+     }
+ 
+     /// This timestamp plus `seconds`.
+     pub fn plus_seconds(self, seconds: i64) -> Self {
+-        Timestamp(self.0.saturating_add(seconds))
++        Default::default() /* ~ changed by cargo-mutants ~ */
+     }
+ }

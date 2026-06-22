@@ -1,0 +1,21 @@
+--- crates/aion-trust-claims/src/presentation.rs
++++ delete ! in verify_presentation
+@@ -126,17 +126,17 @@
+     let mut checks = Vec::new();
+     let subject_vk = verifying_key_from_hex(&p.subject_key)?;
+ 
+     let binds = Did::from_key(&subject_vk) == p.subject_id;
+     check(&mut checks, "subject_id binds to key", binds, p.subject_id.to_string());
+     check(&mut checks, "audience matches verifier", &p.audience == audience, p.audience.to_string());
+     let unexpired = now >= p.issued_at && now <= p.expires_at;
+     check(&mut checks, "unexpired", unexpired, format!("now={}, expires={}", now.0, p.expires_at.0));
+-    check(&mut checks, "nonce fresh (not replayed)", !nonce_already_seen, p.nonce.clone());
++    check(&mut checks, "nonce fresh (not replayed)",  /* ~ changed by cargo-mutants ~ */nonce_already_seen, p.nonce.clone());
+ 
+     let signing = pres_signing_bytes(
+         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,
+         p.issued_at, p.expires_at, &p.claims,
+     );
+     let sig = decode_array::<64>(&p.subject_signature)?;
+     let sig_ok = subject_vk.verify(&signing, &sig).is_ok();
+     check(&mut checks, "subject signature valid", sig_ok, String::new());

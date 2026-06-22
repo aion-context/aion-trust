@@ -1,0 +1,21 @@
+--- crates/aion-trust-core/src/id.rs
++++ replace Did::from_string -> Self with Default::default()
+@@ -19,17 +19,17 @@
+     pub fn from_key(vk: &VerifyingKey) -> Self {
+         let h = crypto::hash(&vk.to_bytes());
+         Did(format!("did:aion:{}", to_hex(&h[..16])))
+     }
+ 
+     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding
+     /// to an actual key is still enforced at verification, so this cannot fabricate trust.
+     pub fn from_string(s: String) -> Self {
+-        Did(s)
++        Default::default() /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     pub fn as_str(&self) -> &str {
+         &self.0
+     }
+ 
+     pub fn as_bytes(&self) -> &[u8] {
+         self.0.as_bytes()

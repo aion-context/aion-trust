@@ -52,3 +52,36 @@ pub fn verifying_key_from_hex(hex: &str) -> Result<VerifyingKey> {
     let bytes = decode_array::<32>(hex)?;
     Ok(VerifyingKey::from_bytes(&bytes)?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn secret_hex_round_trips_to_same_identity() {
+        let id = Identity::generate();
+        let hex = id.secret_hex();
+        assert_eq!(hex.len(), 64); // 32 bytes, hex-encoded
+        let restored = Identity::from_secret_hex(&hex).expect("restore");
+        assert_eq!(restored.did(), id.did()); // pins secret_hex (kills "" / "xyzzy")
+    }
+
+    #[test]
+    fn sign_produces_a_verifiable_signature() {
+        let id = Identity::generate();
+        let msg = b"attestation bytes";
+        let sig = id.sign(msg);
+        // pins sign (kills [0; 64] / [1; 64], which would not verify)
+        assert!(id.verifying_key().verify(msg, &sig).is_ok());
+        assert!(id.verifying_key().verify(b"other message", &sig).is_err());
+    }
+
+    #[test]
+    fn verifying_key_from_hex_round_trips() {
+        let id = Identity::generate();
+        let hex = to_hex(&id.verifying_key().to_bytes());
+        let vk = verifying_key_from_hex(&hex).expect("decode");
+        assert_eq!(vk.to_bytes(), id.verifying_key().to_bytes());
+        assert!(verifying_key_from_hex("00").is_err()); // wrong length
+    }
+}

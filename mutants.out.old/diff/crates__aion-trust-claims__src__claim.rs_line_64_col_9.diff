@@ -1,0 +1,28 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace <impl std::fmt::Display for ClaimReject>::fmt -> std::fmt::Result with Ok(Default::default())
+@@ -56,24 +56,17 @@
+     BodyTampered,
+     ClaimIdMismatch,
+     BadSignature,
+     Malformed,
+ }
+ 
+ impl std::fmt::Display for ClaimReject {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        let s = match self {
+-            ClaimReject::IssuerKeyMismatch => "issuer key does not match issuer_id",
+-            ClaimReject::BodyTampered => "body does not match signed body_hash",
+-            ClaimReject::ClaimIdMismatch => "claim_id does not match signed content",
+-            ClaimReject::BadSignature => "issuer signature is invalid",
+-            ClaimReject::Malformed => "claim is malformed",
+-        };
+-        f.write_str(s)
++        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ /// A signed claim as issued, stored, and transmitted. The `body` is private: read it only
+ /// through a [`VerifiedClaim`].
+ #[derive(Clone, Debug, Serialize, Deserialize)]
+ pub struct Claim {
+     pub claim_id: ClaimId,

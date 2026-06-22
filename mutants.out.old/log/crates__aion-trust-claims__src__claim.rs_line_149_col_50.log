@@ -1,0 +1,349 @@
+
+*** crates/aion-trust-claims/src/claim.rs:149:50: replace != with == in Claim::verify
+
+*** mutation diff:
+--- crates/aion-trust-claims/src/claim.rs
++++ replace != with == in Claim::verify
+@@ -141,17 +141,17 @@
+         let signing = signing_bytes(
+             &self.subject_id,
+             &self.issuer_id,
+             &self.claim_type,
+             &self.schema_id,
+             &self.validity,
+             &body_hash,
+         );
+-        if ClaimId::from_signing_bytes(&signing) != self.claim_id {
++        if ClaimId::from_signing_bytes(&signing) == /* ~ changed by cargo-mutants ~ */ self.claim_id {
+             return Err(ClaimReject::ClaimIdMismatch);
+         }
+         let sig = decode_array::<64>(&self.issuer_signature).map_err(|_| ClaimReject::Malformed)?;
+         issuer_vk
+             .verify(&signing, &sig)
+             .map_err(|_| ClaimReject::BadSignature)?;
+         Ok(VerifiedClaim(self.clone()))
+     }
+
+
+*** /home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=aion-trust-claims@0.1.0
+       Fresh cfg-if v1.0.4
+       Fresh unicode-ident v1.0.24
+       Fresh version_check v0.9.5
+       Fresh typenum v1.20.1
+       Fresh subtle v2.6.1
+       Fresh find-msvc-tools v0.1.9
+       Fresh shlex v2.0.1
+       Fresh libc v0.2.186
+       Fresh cpufeatures v0.2.17
+       Fresh dunce v1.0.5
+       Fresh semver v1.0.28
+       Fresh once_cell v1.21.4
+       Fresh itoa v1.0.18
+       Fresh utf8parse v0.2.2
+       Fresh anstyle v1.0.14
+       Fresh log v0.4.33
+       Fresh regex-syntax v0.8.11
+       Fresh colorchoice v1.0.5
+       Fresh memchr v2.8.2
+       Fresh is_terminal_polyfill v1.70.2
+       Fresh glob v0.3.3
+       Fresh anstyle-query v1.1.5
+       Fresh opaque-debug v0.3.1
+       Fresh hashbrown v0.17.1
+       Fresh option-ext v0.2.0
+       Fresh heck v0.5.0
+       Fresh equivalent v1.0.2
+       Fresh base64ct v1.8.3
+       Fresh lazy_static v1.5.0
+       Fresh pin-project-lite v0.2.17
+       Fresh strsim v0.11.1
+       Fresh signature v2.2.0
+       Fresh clap_lex v1.1.0
+       Fresh thread_local v1.1.9
+       Fresh ryu v1.0.23
+       Fresh smallvec v1.15.2
+       Fresh unsafe-libyaml v0.2.11
+       Fresh nu-ansi-term v0.50.3
+       Fresh pqcrypto-traits v0.3.5
+       Fresh arrayref v0.3.9
+       Fresh arrayvec v0.7.7
+       Fresh ryu-js v0.2.2
+       Fresh either v1.16.0
+       Fresh constant_time_eq v0.4.2
+       Fresh cpufeatures v0.3.0
+       Fresh byteorder v1.5.0
+       Fresh hex v0.4.3
+       Fresh base64 v0.22.1
+       Fresh proc-macro2 v1.0.106
+       Fresh getrandom v0.2.17
+       Fresh jobserver v0.1.34
+       Fresh serde_core v1.0.228
+       Fresh tracing-core v0.1.36
+       Fresh rustc_version v0.4.1
+       Fresh anstyle-parse v1.0.0
+       Fresh regex-automata v0.4.14
+       Fresh ed25519 v2.2.3
+       Fresh rtoolbox v0.0.5
+       Fresh dirs-sys v0.5.0
+       Fresh indexmap v2.14.0
+       Fresh sharded-slab v0.1.7
+       Fresh memmap2 v0.9.10
+       Fresh keyring-core v1.0.0
+       Fresh hostname v0.4.2
+       Fresh quote v1.0.45
+       Fresh rand_core v0.6.4
+       Fresh generic-array v0.14.7
+       Fresh cc v1.2.65
+       Fresh crossbeam-utils v0.8.21
+       Fresh zmij v1.0.21
+       Fresh zerocopy v0.8.52
+       Fresh getrandom v0.3.4
+       Fresh anstream v1.0.0
+       Fresh paste v1.0.15
+       Fresh matchers v0.2.0
+       Fresh tracing-log v0.2.0
+       Fresh anyhow v1.0.102
+       Fresh dirs v6.0.0
+       Fresh rpassword v7.5.4
+       Fresh syn v2.0.118
+       Fresh crypto-common v0.1.7
+       Fresh block-buffer v0.10.4
+       Fresh inout v0.1.4
+       Fresh crossbeam-epoch v0.9.18
+       Fresh ppv-lite86 v0.2.21
+       Fresh serde_json v1.0.150
+       Fresh password-hash v0.5.0
+       Fresh clap_builder v4.6.0
+       Fresh digest v0.10.7
+       Fresh zeroize_derive v1.5.0
+       Fresh serde_derive v1.0.228
+       Fresh curve25519-dalek-derive v0.1.1
+       Fresh universal-hash v0.5.1
+       Fresh tracing-attributes v0.1.31
+       Fresh crossbeam-deque v0.8.6
+       Fresh clap_derive v4.6.1
+       Fresh rand_chacha v0.3.1
+       Fresh zerocopy-derive v0.7.35
+       Fresh thiserror-impl v2.0.18
+       Fresh aead v0.5.2
+       Fresh zeroize v1.9.0
+       Fresh serde v1.0.228
+       Fresh blake2 v0.10.6
+       Fresh pqcrypto-internals v0.2.11
+       Fresh poly1305 v0.8.0
+       Fresh sha2 v0.10.9
+       Fresh hmac v0.12.1
+       Fresh tracing v0.1.44
+       Fresh rayon-core v1.13.0
+       Fresh clap v4.6.1
+       Fresh thiserror v2.0.18
+       Fresh zerocopy v0.7.35
+       Fresh rand v0.8.6
+       Fresh blake3 v1.8.5
+       Fresh cipher v0.4.4
+       Fresh tracing-serde v0.2.0
+       Fresh curve25519-dalek v4.1.3
+       Fresh rayon v1.12.0
+       Fresh serde_yaml v0.9.34+deprecated
+       Fresh hkdf v0.12.4
+       Fresh pqcrypto-mldsa v0.1.2
+       Fresh serde_jcs v0.2.0
+       Fresh argon2 v0.5.3
+       Fresh chacha20 v0.9.1
+       Fresh ed25519-dalek v2.2.0
+       Fresh tracing-subscriber v0.3.23
+       Fresh chacha20poly1305 v0.10.1
+       Fresh aion-context v1.0.0 (/home/ops/Project/aion-context)
+       Fresh aion-trust-core v0.1.0 (/home/ops/Project/aion-trust/crates/aion-trust-core)
+       Dirty aion-trust-claims v0.1.0 (/home/ops/Project/aion-trust/crates/aion-trust-claims): the file `crates/aion-trust-claims/src/claim.rs` has changed (1782088732.233843905s, 1s after last build at 1782088731.788820236s)
+   Compiling aion-trust-claims v0.1.0 (/home/ops/Project/aion-trust/crates/aion-trust-claims)
+     Running `/home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name aion_trust_claims --edition=2021 crates/aion-trust-claims/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=5f0a93249fc10998 -C extra-filename=-0438bf858d08bdb0 --out-dir /home/ops/Project/aion-trust/target/debug/deps -C incremental=/home/ops/Project/aion-trust/target/debug/incremental -L dependency=/home/ops/Project/aion-trust/target/debug/deps --extern aion_context=/home/ops/Project/aion-trust/target/debug/deps/libaion_context-001134d490079d04.rlib --extern aion_trust_core=/home/ops/Project/aion-trust/target/debug/deps/libaion_trust_core-fc2cce40faaa1afd.rlib --extern serde=/home/ops/Project/aion-trust/target/debug/deps/libserde-7efb82752e627a83.rlib --extern serde_json=/home/ops/Project/aion-trust/target/debug/deps/libserde_json-92fce2e17b80df85.rlib -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out`
+     Running `/home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name aion_trust_claims --edition=2021 crates/aion-trust-claims/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=64553ea421ff8433 -C extra-filename=-5b2952189937b93f --out-dir /home/ops/Project/aion-trust/target/debug/deps -C incremental=/home/ops/Project/aion-trust/target/debug/incremental -L dependency=/home/ops/Project/aion-trust/target/debug/deps --extern aion_context=/home/ops/Project/aion-trust/target/debug/deps/libaion_context-001134d490079d04.rmeta --extern aion_trust_core=/home/ops/Project/aion-trust/target/debug/deps/libaion_trust_core-fc2cce40faaa1afd.rmeta --extern serde=/home/ops/Project/aion-trust/target/debug/deps/libserde-7efb82752e627a83.rmeta --extern serde_json=/home/ops/Project/aion-trust/target/debug/deps/libserde_json-92fce2e17b80df85.rmeta -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out`
+     Running `/home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name adversarial --edition=2021 crates/aion-trust-claims/tests/adversarial.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=d3f8b86a38001ba3 -C extra-filename=-2436240e0139f2bf --out-dir /home/ops/Project/aion-trust/target/debug/deps -C incremental=/home/ops/Project/aion-trust/target/debug/incremental -L dependency=/home/ops/Project/aion-trust/target/debug/deps --extern aion_context=/home/ops/Project/aion-trust/target/debug/deps/libaion_context-001134d490079d04.rlib --extern aion_trust_claims=/home/ops/Project/aion-trust/target/debug/deps/libaion_trust_claims-5b2952189937b93f.rlib --extern aion_trust_core=/home/ops/Project/aion-trust/target/debug/deps/libaion_trust_core-fc2cce40faaa1afd.rlib --extern serde=/home/ops/Project/aion-trust/target/debug/deps/libserde-7efb82752e627a83.rlib --extern serde_json=/home/ops/Project/aion-trust/target/debug/deps/libserde_json-92fce2e17b80df85.rlib -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/blake3-e49028885ed32aca/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-mldsa-e914fb1c041cc39f/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out -L native=/home/ops/Project/aion-trust/target/debug/build/pqcrypto-internals-35ce02837cd7ba53/out`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.34s
+  Executable `/home/ops/Project/aion-trust/target/debug/deps/aion_trust_claims-0438bf858d08bdb0`
+  Executable `/home/ops/Project/aion-trust/target/debug/deps/adversarial-2436240e0139f2bf`
+
+*** result: Success
+
+*** /home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --verbose --package=aion-trust-claims@0.1.0
+       Fresh cfg-if v1.0.4
+       Fresh unicode-ident v1.0.24
+       Fresh version_check v0.9.5
+       Fresh typenum v1.20.1
+       Fresh subtle v2.6.1
+       Fresh find-msvc-tools v0.1.9
+       Fresh shlex v2.0.1
+       Fresh cpufeatures v0.2.17
+       Fresh libc v0.2.186
+       Fresh dunce v1.0.5
+       Fresh once_cell v1.21.4
+       Fresh semver v1.0.28
+       Fresh itoa v1.0.18
+       Fresh utf8parse v0.2.2
+       Fresh colorchoice v1.0.5
+       Fresh anstyle-query v1.1.5
+       Fresh glob v0.3.3
+       Fresh anstyle v1.0.14
+       Fresh is_terminal_polyfill v1.70.2
+       Fresh regex-syntax v0.8.11
+       Fresh memchr v2.8.2
+       Fresh log v0.4.33
+       Fresh hashbrown v0.17.1
+       Fresh signature v2.2.0
+       Fresh lazy_static v1.5.0
+       Fresh equivalent v1.0.2
+       Fresh opaque-debug v0.3.1
+       Fresh option-ext v0.2.0
+       Fresh base64ct v1.8.3
+       Fresh clap_lex v1.1.0
+       Fresh heck v0.5.0
+       Fresh pin-project-lite v0.2.17
+       Fresh strsim v0.11.1
+       Fresh thread_local v1.1.9
+       Fresh ryu v1.0.23
+       Fresh ryu-js v0.2.2
+       Fresh byteorder v1.5.0
+       Fresh nu-ansi-term v0.50.3
+       Fresh unsafe-libyaml v0.2.11
+       Fresh smallvec v1.15.2
+       Fresh arrayref v0.3.9
+       Fresh cpufeatures v0.3.0
+       Fresh arrayvec v0.7.7
+       Fresh constant_time_eq v0.4.2
+       Fresh pqcrypto-traits v0.3.5
+       Fresh either v1.16.0
+       Fresh hex v0.4.3
+       Fresh base64 v0.22.1
+       Fresh proc-macro2 v1.0.106
+       Fresh getrandom v0.2.17
+       Fresh jobserver v0.1.34
+       Fresh serde_core v1.0.228
+       Fresh crossbeam-utils v0.8.21
+       Fresh rustc_version v0.4.1
+       Fresh tracing-core v0.1.36
+       Fresh anstyle-parse v1.0.0
+       Fresh regex-automata v0.4.14
+       Fresh sharded-slab v0.1.7
+       Fresh rtoolbox v0.0.5
+       Fresh dirs-sys v0.5.0
+       Fresh ed25519 v2.2.3
+       Fresh indexmap v2.14.0
+       Fresh memmap2 v0.9.10
+       Fresh keyring-core v1.0.0
+       Fresh hostname v0.4.2
+       Fresh quote v1.0.45
+       Fresh rand_core v0.6.4
+       Fresh generic-array v0.14.7
+       Fresh cc v1.2.65
+       Fresh zerocopy v0.8.52
+       Fresh zmij v1.0.21
+       Fresh crossbeam-epoch v0.9.18
+       Fresh anstream v1.0.0
+       Fresh getrandom v0.3.4
+       Fresh paste v1.0.15
+       Fresh matchers v0.2.0
+       Fresh tracing-log v0.2.0
+       Fresh dirs v6.0.0
+       Fresh rpassword v7.5.4
+       Fresh anyhow v1.0.102
+       Fresh syn v2.0.118
+       Fresh crypto-common v0.1.7
+       Fresh block-buffer v0.10.4
+       Fresh inout v0.1.4
+       Fresh ppv-lite86 v0.2.21
+       Fresh serde_json v1.0.150
+       Fresh crossbeam-deque v0.8.6
+       Fresh password-hash v0.5.0
+       Fresh clap_builder v4.6.0
+       Fresh digest v0.10.7
+       Fresh zeroize_derive v1.5.0
+       Fresh serde_derive v1.0.228
+       Fresh tracing-attributes v0.1.31
+       Fresh curve25519-dalek-derive v0.1.1
+       Fresh universal-hash v0.5.1
+       Fresh clap_derive v4.6.1
+       Fresh zerocopy-derive v0.7.35
+       Fresh rayon-core v1.13.0
+       Fresh thiserror-impl v2.0.18
+       Fresh aead v0.5.2
+       Fresh rand_chacha v0.3.1
+       Fresh zeroize v1.9.0
+       Fresh serde v1.0.228
+       Fresh pqcrypto-internals v0.2.11
+       Fresh blake2 v0.10.6
+       Fresh hmac v0.12.1
+       Fresh tracing v0.1.44
+       Fresh poly1305 v0.8.0
+       Fresh sha2 v0.10.9
+       Fresh rayon v1.12.0
+       Fresh clap v4.6.1
+       Fresh blake3 v1.8.5
+       Fresh rand v0.8.6
+       Fresh zerocopy v0.7.35
+       Fresh thiserror v2.0.18
+       Fresh cipher v0.4.4
+       Fresh tracing-serde v0.2.0
+       Fresh curve25519-dalek v4.1.3
+       Fresh argon2 v0.5.3
+       Fresh hkdf v0.12.4
+       Fresh pqcrypto-mldsa v0.1.2
+       Fresh serde_yaml v0.9.34+deprecated
+       Fresh serde_jcs v0.2.0
+       Fresh chacha20 v0.9.1
+       Fresh ed25519-dalek v2.2.0
+       Fresh tracing-subscriber v0.3.23
+       Fresh chacha20poly1305 v0.10.1
+       Fresh aion-context v1.0.0 (/home/ops/Project/aion-context)
+       Fresh aion-trust-core v0.1.0 (/home/ops/Project/aion-trust/crates/aion-trust-core)
+       Fresh aion-trust-claims v0.1.0 (/home/ops/Project/aion-trust/crates/aion-trust-claims)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `/home/ops/Project/aion-trust/target/debug/deps/aion_trust_claims-0438bf858d08bdb0`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/home/ops/Project/aion-trust/target/debug/deps/adversarial-2436240e0139f2bf`
+
+running 10 tests
+test claim_outside_its_validity_window_is_rejected ... FAILED
+test expired_presentation_is_rejected ... ok
+test happy_path_is_accepted ... FAILED
+test json_round_trip_still_verifies ... FAILED
+test forged_claim_signature_is_rejected ... ok
+test tampered_body_is_rejected ... ok
+test replayed_nonce_is_rejected ... ok
+test unknown_issuer_is_not_accepted ... ok
+test wrong_audience_is_rejected ... ok
+test presenting_another_subjects_claim_is_rejected ... ok
+
+failures:
+
+---- claim_outside_its_validity_window_is_rejected stdout ----
+
+thread 'claim_outside_its_validity_window_is_rejected' (160359) panicked at crates/aion-trust-claims/tests/adversarial.rs:160:5:
+assertion failed: failed(&r, "claim within validity")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- happy_path_is_accepted stdout ----
+
+thread 'happy_path_is_accepted' (160362) panicked at crates/aion-trust-claims/tests/adversarial.rs:56:5:
+checks: [Check { name: "subject_id binds to key", passed: true, detail: "did:aion:6e25519aa77f41e0fe084417af4f6448" }, Check { name: "audience matches verifier", passed: true, detail: "did:aion:73bf3bb1a7d07179eae400940e7c173b" }, Check { name: "unexpired", passed: true, detail: "now=1700000000, expires=1700003600" }, Check { name: "nonce fresh (not replayed)", passed: true, detail: "6e6f6e63652d616263646566303132333435" }, Check { name: "subject signature valid", passed: true, detail: "" }, Check { name: "claim subject matches presenter", passed: true, detail: "171d81db52b447193a8399198a915d78c2c2e6ce5c6c9d02389708e5c73429e5" }, Check { name: "claim authentic", passed: false, detail: "claim_id does not match signed content" }]
+
+---- json_round_trip_still_verifies stdout ----
+
+thread 'json_round_trip_still_verifies' (160363) panicked at crates/aion-trust-claims/tests/adversarial.rs:66:5:
+checks: [Check { name: "subject_id binds to key", passed: true, detail: "did:aion:751376666e12b9276209c2be146e1019" }, Check { name: "audience matches verifier", passed: true, detail: "did:aion:ad4f132529a5800dfd210f2c36bc84e4" }, Check { name: "unexpired", passed: true, detail: "now=1700000000, expires=1700003600" }, Check { name: "nonce fresh (not replayed)", passed: true, detail: "6e6f6e63652d616263646566303132333435" }, Check { name: "subject signature valid", passed: true, detail: "" }, Check { name: "claim subject matches presenter", passed: true, detail: "4090733a6bfb9759e12eecec0b2237a488cf415a90dedb650bcea2f1ad2505bc" }, Check { name: "claim authentic", passed: false, detail: "claim_id does not match signed content" }]
+
+
+failures:
+    claim_outside_its_validity_window_is_rejected
+    happy_path_is_accepted
+    json_round_trip_still_verifies
+
+test result: FAILED. 7 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p aion-trust-claims --test adversarial`
+
+*** result: Failure(101)

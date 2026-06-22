@@ -1,0 +1,29 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace signing_bytes -> Vec<u8> with vec![0]
+@@ -193,25 +193,10 @@
+ fn signing_bytes(
+     subject: &Did,
+     issuer: &Did,
+     claim_type: &ClaimType,
+     schema: &str,
+     validity: &Validity,
+     body_hash: &[u8; 32],
+ ) -> Vec<u8> {
+-    let mut w = SigningWriter::new(CLAIM_DOMAIN);
+-    w.field(subject.as_bytes())
+-        .field(issuer.as_bytes())
+-        .field(claim_type.tag())
+-        .field(schema.as_bytes())
+-        .int(validity.from.0);
+-    match validity.until {
+-        Some(t) => {
+-            w.field(b"until").int(t.0);
+-        }
+-        None => {
+-            w.field(b"open");
+-        }
+-    }
+-    w.field(body_hash);
+-    w.into_bytes()
++    vec![0] /* ~ changed by cargo-mutants ~ */
+ }

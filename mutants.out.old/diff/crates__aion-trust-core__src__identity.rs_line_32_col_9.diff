@@ -1,0 +1,21 @@
+--- crates/aion-trust-core/src/identity.rs
++++ replace Identity::secret_hex -> String with String::new()
+@@ -24,17 +24,17 @@
+         let bytes = decode_array::<32>(hex)?;
+         Ok(Self {
+             signing_key: SigningKey::from_bytes(&bytes)?,
+         })
+     }
+ 
+     /// The 32-byte secret, hex-encoded. Treat as a secret: never log or commit it.
+     pub fn secret_hex(&self) -> String {
+-        to_hex(self.signing_key.to_bytes())
++        String::new() /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     pub fn verifying_key(&self) -> VerifyingKey {
+         self.signing_key.verifying_key()
+     }
+ 
+     /// This identity's public did.
+     pub fn did(&self) -> Did {

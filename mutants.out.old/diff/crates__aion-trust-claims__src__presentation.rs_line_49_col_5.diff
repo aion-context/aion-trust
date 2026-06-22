@@ -1,0 +1,41 @@
+--- crates/aion-trust-claims/src/presentation.rs
++++ replace build_presentation -> Presentation with Default::default()
+@@ -41,37 +41,17 @@
+     subject: &Identity,
+     audience: &Did,
+     purpose: &str,
+     nonce: &[u8],
+     issued_at: Timestamp,
+     expires_at: Timestamp,
+     claims: Vec<Claim>,
+ ) -> Presentation {
+-    let signing = pres_signing_bytes(
+-        &subject.did(),
+-        audience,
+-        purpose,
+-        nonce,
+-        issued_at,
+-        expires_at,
+-        &claims,
+-    );
+-    Presentation {
+-        presentation_id: to_hex(&aion_context::crypto::hash(&signing)),
+-        subject_id: subject.did(),
+-        subject_key: to_hex(&subject.verifying_key().to_bytes()),
+-        audience: audience.clone(),
+-        purpose: purpose.to_string(),
+-        nonce: to_hex(nonce),
+-        issued_at,
+-        expires_at,
+-        claims,
+-        subject_signature: to_hex(&subject.sign(&signing)),
+-    }
++    Default::default() /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// The verifier's trust anchor: the public keys of issuers it recognizes. (Phase 3 replaces
+ /// this with accreditation records resolved against aion-context.)
+ #[derive(Default)]
+ pub struct IssuerDirectory {
+     keys: HashMap<Did, VerifyingKey>,
+ }

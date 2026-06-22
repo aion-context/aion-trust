@@ -57,3 +57,40 @@ impl ClaimId {
         &self.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aion_context::crypto::SigningKey;
+
+    fn fresh_key() -> VerifyingKey {
+        SigningKey::generate().verifying_key()
+    }
+
+    #[test]
+    fn did_is_deterministic_and_key_bound() {
+        let k = fresh_key();
+        assert_eq!(Did::from_key(&k), Did::from_key(&k)); // same key → same did
+        assert_ne!(Did::from_key(&k), Did::from_key(&fresh_key())); // different key → different
+        let d = Did::from_key(&k);
+        assert!(d.as_str().starts_with("did:aion:")); // pins as_str (kills "" / "xyzzy")
+        assert_eq!(d.as_bytes(), d.as_str().as_bytes()); // pins as_bytes
+        assert_eq!(format!("{d}"), d.as_str().to_string()); // pins Display
+    }
+
+    #[test]
+    fn did_from_string_preserves_input() {
+        let d = Did::from_string("did:aion:abc".to_string());
+        assert_eq!(d.as_str(), "did:aion:abc");
+    }
+
+    #[test]
+    fn claim_id_is_content_addressed() {
+        assert_eq!(ClaimId::from_signing_bytes(b"abc"), ClaimId::from_signing_bytes(b"abc"));
+        assert_ne!(ClaimId::from_signing_bytes(b"abc"), ClaimId::from_signing_bytes(b"abd"));
+        // pins as_str: non-empty and not the mutation sentinel
+        let id = ClaimId::from_signing_bytes(b"abc");
+        assert!(!id.as_str().is_empty());
+        assert_ne!(id.as_str(), "xyzzy");
+    }
+}

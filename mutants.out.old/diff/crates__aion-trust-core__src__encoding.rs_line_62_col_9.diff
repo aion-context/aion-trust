@@ -1,0 +1,24 @@
+--- crates/aion-trust-core/src/encoding.rs
++++ replace SigningWriter::field -> &mut Self with Box::leak(Box::new(Default::default()))
+@@ -54,20 +54,17 @@
+     pub fn new(domain: &[u8]) -> Self {
+         let mut w = Self { buf: Vec::new() };
+         w.field(domain);
+         w
+     }
+ 
+     /// Append a length-prefixed field (4-byte big-endian length, then the bytes).
+     pub fn field(&mut self, bytes: &[u8]) -> &mut Self {
+-        self.buf
+-            .extend_from_slice(&(bytes.len() as u32).to_be_bytes());
+-        self.buf.extend_from_slice(bytes);
+-        self
++        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     /// Append a signed 64-bit integer as a fixed 8-byte field.
+     pub fn int(&mut self, v: i64) -> &mut Self {
+         self.field(&v.to_be_bytes())
+     }
+ 
+     pub fn into_bytes(self) -> Vec<u8> {

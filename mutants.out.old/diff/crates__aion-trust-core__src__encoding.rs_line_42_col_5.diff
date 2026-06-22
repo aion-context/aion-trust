@@ -1,0 +1,23 @@
+--- crates/aion-trust-core/src/encoding.rs
++++ replace decode_array -> Result<[u8; N]> with Ok([0; N])
+@@ -34,19 +34,17 @@
+     for pair in bytes.chunks_exact(2) {
+         out.push((nib(pair[0])? << 4) | nib(pair[1])?);
+     }
+     Ok(out)
+ }
+ 
+ /// Decode a hex string into a fixed-size array, erroring on the wrong length.
+ pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {
+-    let v = from_hex(s)?;
+-    v.try_into()
+-        .map_err(|_| TrustError::Decode(format!("expected {N} bytes")))
++    Ok([0; N]) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Builds unambiguous, domain-separated bytes for signing.
+ pub struct SigningWriter {
+     buf: Vec<u8>,
+ }
+ 
+ impl SigningWriter {

@@ -1,0 +1,21 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace != with == in Claim::verify
+@@ -126,17 +126,17 @@
+ 
+     pub fn claim_id(&self) -> &ClaimId {
+         &self.claim_id
+     }
+ 
+     /// Verify this claim against the issuer's trusted key. On success returns a
+     /// [`VerifiedClaim`] — the only way to read the body.
+     pub fn verify(&self, issuer_vk: &VerifyingKey) -> Result<VerifiedClaim, ClaimReject> {
+-        if Did::from_key(issuer_vk) != self.issuer_id {
++        if Did::from_key(issuer_vk) == /* ~ changed by cargo-mutants ~ */ self.issuer_id {
+             return Err(ClaimReject::IssuerKeyMismatch);
+         }
+         let body_hash = hash_body(&self.body)?;
+         if to_hex(&body_hash) != self.body_hash {
+             return Err(ClaimReject::BodyTampered);
+         }
+         let signing = signing_bytes(
+             &self.subject_id,

@@ -1,0 +1,21 @@
+--- crates/aion-trust-core/src/identity.rs
++++ replace Identity::sign -> [u8; 64] with [1; 64]
+@@ -38,17 +38,17 @@
+ 
+     /// This identity's public did.
+     pub fn did(&self) -> Did {
+         Did::from_key(&self.verifying_key())
+     }
+ 
+     /// Sign a message, producing a 64-byte Ed25519 signature.
+     pub fn sign(&self, message: &[u8]) -> [u8; 64] {
+-        self.signing_key.sign(message)
++        [1; 64] /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ /// Decode a verifying key from its 32-byte hex encoding.
+ pub fn verifying_key_from_hex(hex: &str) -> Result<VerifyingKey> {
+     let bytes = decode_array::<32>(hex)?;
+     Ok(VerifyingKey::from_bytes(&bytes)?)
+ }

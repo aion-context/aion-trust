@@ -1,0 +1,23 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace ClaimType::tag -> &'static[u8] with Vec::leak(Vec::new())
+@@ -14,19 +14,17 @@
+ #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+ #[serde(rename_all = "snake_case")]
+ pub enum ClaimType {
+     Employment,
+ }
+ 
+ impl ClaimType {
+     fn tag(&self) -> &'static [u8] {
+-        match self {
+-            ClaimType::Employment => b"employment",
+-        }
++        Vec::leak(Vec::new()) /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ /// The time window a claim asserts. `until: None` means open-ended / current.
+ #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct Validity {
+     pub from: Timestamp,
+     pub until: Option<Timestamp>,

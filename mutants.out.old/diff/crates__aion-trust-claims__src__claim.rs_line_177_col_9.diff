@@ -1,0 +1,21 @@
+--- crates/aion-trust-claims/src/claim.rs
++++ replace VerifiedClaim::validity -> &Validity with Box::leak(Box::new(Default::default()))
+@@ -169,17 +169,17 @@
+     }
+     pub fn claim_id(&self) -> &ClaimId {
+         &self.0.claim_id
+     }
+     pub fn claim_type(&self) -> &ClaimType {
+         &self.0.claim_type
+     }
+     pub fn validity(&self) -> &Validity {
+-        &self.0.validity
++        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */
+     }
+     /// The trusted body — reachable only after verification.
+     pub fn body(&self) -> &EmploymentBody {
+         &self.0.body
+     }
+     pub fn active_at(&self, now: Timestamp) -> bool {
+         self.0.validity.active_at(now)
+     }
