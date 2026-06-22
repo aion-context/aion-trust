@@ -1,0 +1,157 @@
+/* aion-trust web surfaces — design tokens reused verbatim from site/styles.css, restyled for
+   the issuer / wallet / verifier app chrome (forms, tables, check rows, verdicts). */
+:root {
+  color-scheme: dark;
+  --ink: oklch(94% 0.012 171);
+  --muted: oklch(75% 0.026 174);
+  --dim: oklch(56% 0.024 174);
+  --ground: oklch(8% 0.026 175);
+  --panel: oklch(11% 0.031 176 / 0.68);
+  --line: oklch(90% 0.03 174 / 0.18);
+  --line-hot: oklch(78% 0.16 161 / 0.58);
+  --panel-edge: oklch(83% 0.08 166 / 0.32);
+  --mint: oklch(78% 0.16 161);
+  --amber: oklch(82% 0.14 78);
+  --coral: oklch(72% 0.18 34);
+  --violet: oklch(68% 0.13 292);
+  --radius: 8px;
+  --ease: cubic-bezier(0.19, 1, 0.22, 1);
+  font-family: "Afacad", ui-sans-serif, sans-serif;
+  background: var(--ground);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 72% 12%, oklch(78% 0.16 161 / 0.14), transparent 30rem),
+    radial-gradient(circle at 12% 88%, oklch(72% 0.18 34 / 0.12), transparent 26rem),
+    #020806;
+}
+
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.wrap { max-width: 70rem; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+/* ── header / nav ───────────────────────────────────────────────────────── */
+header.top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 1.25rem 1.5rem; max-width: 70rem; margin: 0 auto;
+}
+.brand {
+  font-family: "Bricolage Grotesque", sans-serif; font-weight: 700;
+  letter-spacing: -0.02em; font-size: 1.15rem;
+}
+.brand .dot { color: var(--mint); }
+nav.surfaces { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+nav.surfaces a {
+  padding: 0.4rem 0.85rem; border-radius: var(--radius); color: var(--muted);
+  border: 1px solid transparent; font-size: 0.92rem;
+}
+nav.surfaces a:hover { color: var(--ink); border-color: var(--line); }
+nav.surfaces a.active { color: var(--ground); background: var(--mint); font-weight: 600; }
+
+/* ── kicker / headings ──────────────────────────────────────────────────── */
+.kicker {
+  text-transform: uppercase; letter-spacing: 0.28em; font-size: 0.72rem;
+  color: var(--amber); margin: 0 0 0.5rem;
+}
+h1, h2, h3 { font-family: "Bricolage Grotesque", sans-serif; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+p.lede { color: var(--muted); max-width: 46rem; line-height: 1.5; }
+
+/* ── glass panels ───────────────────────────────────────────────────────── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.4rem;
+  backdrop-filter: blur(14px);
+  margin: 1rem 0;
+}
+.panel h2 { font-size: 1.15rem; }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+
+/* ── home cards ─────────────────────────────────────────────────────────── */
+.card { display: block; }
+.card:hover { border-color: var(--line-hot); }
+.card .arrow { color: var(--mint); }
+
+/* ── forms ──────────────────────────────────────────────────────────────── */
+form.stack { display: grid; gap: 0.75rem; }
+label.field { display: grid; gap: 0.3rem; font-size: 0.85rem; color: var(--muted); }
+input[type="text"], input[type="number"], select, textarea {
+  background: oklch(14% 0.03 176 / 0.7);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.7rem;
+}
+.checks-inline { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.checks-inline label { display: inline-flex; gap: 0.4rem; align-items: center; color: var(--ink); font-size: 0.9rem; }
+
+.button {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 1.1rem; border-radius: var(--radius); cursor: pointer;
+  background: var(--mint); color: var(--ground); font-weight: 600;
+  border: 1px solid transparent;
+}
+.button:hover { filter: brightness(1.08); }
+.button.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.button.danger { background: var(--coral); }
+.button.amber { background: var(--amber); }
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; }
+code, .mono { font-family: ui-monospace, "SF Mono", monospace; font-size: 0.82em; color: var(--muted); }
+
+.badge { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600; }
+.badge.ok { background: oklch(78% 0.16 161 / 0.18); color: var(--mint); }
+.badge.warn { background: oklch(82% 0.14 78 / 0.18); color: var(--amber); }
+.badge.bad { background: oklch(72% 0.18 34 / 0.18); color: var(--coral); }
+
+/* ── verification check rows ────────────────────────────────────────────── */
+.check-row {
+  display: flex; gap: 0.65rem; align-items: baseline;
+  padding: 0.5rem 0.7rem; border-radius: var(--radius);
+  border: 1px solid var(--line); margin: 0.35rem 0;
+  background: oklch(12% 0.03 176 / 0.5);
+}
+.check-row .mark { font-weight: 700; }
+.check-row.is-valid { border-color: var(--line-hot); }
+.check-row.is-valid .mark { color: var(--mint); }
+.check-row.is-invalid { border-color: oklch(72% 0.18 34 / 0.5); }
+.check-row.is-invalid .mark { color: var(--coral); }
+.check-row .detail { color: var(--dim); margin-left: auto; font-size: 0.82rem; }
+
+.verdict {
+  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+  letter-spacing: 0.04em; font-size: 1.5rem; padding: 0.6rem 1.2rem;
+  border-radius: var(--radius); display: inline-block; margin-top: 1rem;
+}
+.verdict.accepted { color: var(--mint); border: 1px solid var(--line-hot); }
+.verdict.rejected { color: var(--coral); border: 1px solid oklch(72% 0.18 34 / 0.6); }
+
+/* ── walkthrough stage ──────────────────────────────────────────────────── */
+.stage { min-height: 18rem; display: grid; gap: 0.5rem; }
+.stage .act { opacity: 0.4; transition: opacity 0.4s var(--ease); }
+.stage .act.live { opacity: 1; }
+.stage .act .title { font-weight: 600; color: var(--amber); }
+
+footer.motto {
+  text-align: center; color: var(--dim); padding: 2rem 1rem 3rem;
+  font-family: "Bricolage Grotesque", sans-serif; letter-spacing: 0.02em;
+}
+.notice {
+  border: 1px dashed var(--panel-edge); border-radius: var(--radius);
+  padding: 0.75rem 1rem; color: var(--muted); font-size: 0.85rem; margin: 1rem 0;
+}

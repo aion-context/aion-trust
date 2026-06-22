@@ -112,6 +112,12 @@ enum Cmd {
         #[arg(long = "predicate")]
         predicates: Vec<String>,
     },
+    /// Serve the local web demo (issuer console · candidate wallet · employer verifier) on
+    /// 127.0.0.1. Local single-operator demo only — holds your own keys in memory, loopback-bound.
+    Serve {
+        #[arg(long, default_value_t = 8080)]
+        port: u16,
+    },
 }
 
 fn main() {
@@ -128,6 +134,7 @@ fn run(cli: Cli) -> Result<()> {
         Cmd::IssueCheck { .. } => issue_check(cli.cmd),
         Cmd::Present { .. } => present(cli.cmd),
         Cmd::Verify { .. } => verify(cli.cmd),
+        Cmd::Serve { port } => aion_trust_web::serve(port).map_err(TrustError::Io),
     }
 }
 
