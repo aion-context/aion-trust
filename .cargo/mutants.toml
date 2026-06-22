@@ -1,0 +1,5 @@
+# Mutation testing targets the library logic (aion-trust-core, aion-trust-claims), where
+# correctness is load-bearing. aion-trust-cli is thin I/O glue exercised by the end-to-end
+# demo, not unit-mutated. Run in-place because aion-context is a sibling path dep that does
+# not survive cargo-mutants' default /tmp copy.
+exclude_globs = ["crates/aion-trust-cli/**"]
