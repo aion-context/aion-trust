@@ -153,6 +153,35 @@ fn one_accreditor_endorsing_twice_counts_once() {
 }
 
 #[test]
+fn an_accreditor_outside_the_policy_set_does_not_count() {
+    let provider = Identity::generate();
+    let gov1 = Identity::generate();
+    let gov2 = Identity::generate();
+    let outsider = Identity::generate(); // registered, but NOT in the policy's accreditor set
+    let mut reg = Registry::new(1);
+    reg.register_issuer(provider.verifying_key());
+    reg.register_accreditor(gov1.verifying_key());
+    reg.register_accreditor(gov2.verifying_key());
+    reg.register_accreditor(outsider.verifying_key());
+    reg.require_accreditation("background_check", 2, vec![gov1.did(), gov2.did()]);
+    // gov1 (in policy) + outsider (valid sig, but not named in the policy) → only 1 counts.
+    let mut acc = Accreditation::new(provider.did(), "background_check", 1, None);
+    acc.endorse(&gov1);
+    acc.endorse(&outsider);
+    reg.add_accreditation(acc);
+    let standing = aion_trust_claims::TrustAnchor::standing(
+        &reg,
+        &provider.did(),
+        "background_check",
+        Timestamp(0),
+    );
+    assert!(
+        !standing.accredited,
+        "only accreditors named in the policy count toward K-of-N"
+    );
+}
+
+#[test]
 fn ledger_record_carries_no_pii() {
     let mut reg = Registry::new(5);
     let rec = reg.ledger_record("blake3:opaque-id");
