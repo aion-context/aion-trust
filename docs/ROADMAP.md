@@ -21,7 +21,7 @@ The spine on aion-context. One claim type end to end.
 - **Demo:** an employment claim issued, presented, and verified offline — with a tampered
   body and a wrong subject both correctly rejected.
 
-## Phase 2 — Claims, wallet & reuse
+## Phase 2 — Claims, wallet & reuse  ✅
 
 Breadth and the money workflow.
 
