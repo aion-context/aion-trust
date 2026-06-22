@@ -1,0 +1,3650 @@
+[
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace ClaimType::tag -> &'static[u8] with Vec::leak(Vec::new())\n@@ -14,19 +14,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n #[serde(rename_all = \"snake_case\")]\n pub enum ClaimType {\n     Employment,\n }\n \n impl ClaimType {\n     fn tag(&self) -> &'static [u8] {\n-        match self {\n-            ClaimType::Employment => b\"employment\",\n-        }\n+        Vec::leak(Vec::new()) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The time window a claim asserts. `until: None` means open-ended / current.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "ClaimType::tag",
+      "return_type": "-> &'static[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 25
+        },
+        "start": {
+          "column": 5,
+          "line": 21
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:22:9: replace ClaimType::tag -> &'static[u8] with Vec::leak(Vec::new())",
+    "package": "aion-trust-claims",
+    "replacement": "Vec::leak(Vec::new())",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 24
+      },
+      "start": {
+        "column": 9,
+        "line": 22
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace ClaimType::tag -> &'static[u8] with Vec::leak(vec![0])\n@@ -14,19 +14,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n #[serde(rename_all = \"snake_case\")]\n pub enum ClaimType {\n     Employment,\n }\n \n impl ClaimType {\n     fn tag(&self) -> &'static [u8] {\n-        match self {\n-            ClaimType::Employment => b\"employment\",\n-        }\n+        Vec::leak(vec![0]) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The time window a claim asserts. `until: None` means open-ended / current.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "ClaimType::tag",
+      "return_type": "-> &'static[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 25
+        },
+        "start": {
+          "column": 5,
+          "line": 21
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:22:9: replace ClaimType::tag -> &'static[u8] with Vec::leak(vec![0])",
+    "package": "aion-trust-claims",
+    "replacement": "Vec::leak(vec![0])",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 24
+      },
+      "start": {
+        "column": 9,
+        "line": 22
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace ClaimType::tag -> &'static[u8] with Vec::leak(vec![1])\n@@ -14,19 +14,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n #[serde(rename_all = \"snake_case\")]\n pub enum ClaimType {\n     Employment,\n }\n \n impl ClaimType {\n     fn tag(&self) -> &'static [u8] {\n-        match self {\n-            ClaimType::Employment => b\"employment\",\n-        }\n+        Vec::leak(vec![1]) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The time window a claim asserts. `until: None` means open-ended / current.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "ClaimType::tag",
+      "return_type": "-> &'static[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 25
+        },
+        "start": {
+          "column": 5,
+          "line": 21
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:22:9: replace ClaimType::tag -> &'static[u8] with Vec::leak(vec![1])",
+    "package": "aion-trust-claims",
+    "replacement": "Vec::leak(vec![1])",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 24
+      },
+      "start": {
+        "column": 9,
+        "line": 22
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Validity::active_at -> bool with true\n@@ -29,17 +29,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n }\n \n impl Validity {\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        now >= self.from && self.until.map_or(true, |u| now <= u)\n+        true /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The employment claim body — the PII-bearing payload. Never written to the ledger.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct EmploymentBody {\n     pub employer: String,\n     pub title: String,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Validity::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 38
+        },
+        "start": {
+          "column": 5,
+          "line": 36
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:37:9: replace Validity::active_at -> bool with true",
+    "package": "aion-trust-claims",
+    "replacement": "true",
+    "span": {
+      "end": {
+        "column": 66,
+        "line": 37
+      },
+      "start": {
+        "column": 9,
+        "line": 37
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Validity::active_at -> bool with false\n@@ -29,17 +29,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n }\n \n impl Validity {\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        now >= self.from && self.until.map_or(true, |u| now <= u)\n+        false /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The employment claim body — the PII-bearing payload. Never written to the ledger.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct EmploymentBody {\n     pub employer: String,\n     pub title: String,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Validity::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 38
+        },
+        "start": {
+          "column": 5,
+          "line": 36
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:37:9: replace Validity::active_at -> bool with false",
+    "package": "aion-trust-claims",
+    "replacement": "false",
+    "span": {
+      "end": {
+        "column": 66,
+        "line": 37
+      },
+      "start": {
+        "column": 9,
+        "line": 37
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace && with || in Validity::active_at\n@@ -29,17 +29,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n }\n \n impl Validity {\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        now >= self.from && self.until.map_or(true, |u| now <= u)\n+        now >= self.from || /* ~ changed by cargo-mutants ~ */ self.until.map_or(true, |u| now <= u)\n     }\n }\n \n /// The employment claim body — the PII-bearing payload. Never written to the ledger.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct EmploymentBody {\n     pub employer: String,\n     pub title: String,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Validity::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 38
+        },
+        "start": {
+          "column": 5,
+          "line": 36
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:37:26: replace && with || in Validity::active_at",
+    "package": "aion-trust-claims",
+    "replacement": "||",
+    "span": {
+      "end": {
+        "column": 28,
+        "line": 37
+      },
+      "start": {
+        "column": 26,
+        "line": 37
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace >= with < in Validity::active_at\n@@ -29,17 +29,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n }\n \n impl Validity {\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        now >= self.from && self.until.map_or(true, |u| now <= u)\n+        now < /* ~ changed by cargo-mutants ~ */ self.from && self.until.map_or(true, |u| now <= u)\n     }\n }\n \n /// The employment claim body — the PII-bearing payload. Never written to the ledger.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct EmploymentBody {\n     pub employer: String,\n     pub title: String,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Validity::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 38
+        },
+        "start": {
+          "column": 5,
+          "line": 36
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:37:13: replace >= with < in Validity::active_at",
+    "package": "aion-trust-claims",
+    "replacement": "<",
+    "span": {
+      "end": {
+        "column": 15,
+        "line": 37
+      },
+      "start": {
+        "column": 13,
+        "line": 37
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace <= with > in Validity::active_at\n@@ -29,17 +29,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct Validity {\n     pub from: Timestamp,\n     pub until: Option<Timestamp>,\n }\n \n impl Validity {\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        now >= self.from && self.until.map_or(true, |u| now <= u)\n+        now >= self.from && self.until.map_or(true, |u| now > /* ~ changed by cargo-mutants ~ */ u)\n     }\n }\n \n /// The employment claim body — the PII-bearing payload. Never written to the ledger.\n #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]\n pub struct EmploymentBody {\n     pub employer: String,\n     pub title: String,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Validity::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 38
+        },
+        "start": {
+          "column": 5,
+          "line": 36
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:37:61: replace <= with > in Validity::active_at",
+    "package": "aion-trust-claims",
+    "replacement": ">",
+    "span": {
+      "end": {
+        "column": 63,
+        "line": 37
+      },
+      "start": {
+        "column": 61,
+        "line": 37
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace <impl std::fmt::Display for ClaimReject>::fmt -> std::fmt::Result with Ok(Default::default())\n@@ -56,24 +56,17 @@\n     BodyTampered,\n     ClaimIdMismatch,\n     BadSignature,\n     Malformed,\n }\n \n impl std::fmt::Display for ClaimReject {\n     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n-        let s = match self {\n-            ClaimReject::IssuerKeyMismatch => \"issuer key does not match issuer_id\",\n-            ClaimReject::BodyTampered => \"body does not match signed body_hash\",\n-            ClaimReject::ClaimIdMismatch => \"claim_id does not match signed content\",\n-            ClaimReject::BadSignature => \"issuer signature is invalid\",\n-            ClaimReject::Malformed => \"claim is malformed\",\n-        };\n-        f.write_str(s)\n+        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// A signed claim as issued, stored, and transmitted. The `body` is private: read it only\n /// through a [`VerifiedClaim`].\n #[derive(Clone, Debug, Serialize, Deserialize)]\n pub struct Claim {\n     pub claim_id: ClaimId,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "<impl std::fmt::Display for ClaimReject>::fmt",
+      "return_type": "-> std::fmt::Result",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 72
+        },
+        "start": {
+          "column": 5,
+          "line": 63
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:64:9: replace <impl std::fmt::Display for ClaimReject>::fmt -> std::fmt::Result with Ok(Default::default())",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 23,
+        "line": 71
+      },
+      "start": {
+        "column": 9,
+        "line": 64
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Claim::issue -> Result<Claim, ClaimReject> with Ok(Default::default())\n@@ -91,36 +91,17 @@\n     /// Issue (sign) an employment claim for `subject`. The issuer signs the domain-\n     /// separated content; `claim_id` is the content hash.\n     pub fn issue(\n         issuer: &Identity,\n         subject: &Did,\n         validity: Validity,\n         body: EmploymentBody,\n     ) -> Result<Claim, ClaimReject> {\n-        let body_hash = hash_body(&body)?;\n-        let signing = signing_bytes(\n-            subject,\n-            &issuer.did(),\n-            &ClaimType::Employment,\n-            SCHEMA_EMPLOYMENT,\n-            &validity,\n-            &body_hash,\n-        );\n-        Ok(Claim {\n-            claim_id: ClaimId::from_signing_bytes(&signing),\n-            claim_type: ClaimType::Employment,\n-            schema_id: SCHEMA_EMPLOYMENT.to_string(),\n-            subject_id: subject.clone(),\n-            issuer_id: issuer.did(),\n-            validity,\n-            body,\n-            body_hash: to_hex(&body_hash),\n-            issuer_signature: to_hex(&issuer.sign(&signing)),\n-        })\n+        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// The issuer this claim *claims* to be from — used to resolve the trusted key. Reading\n     /// it does not imply trust; verification still decides.\n     pub fn issuer_id(&self) -> &Did {\n         &self.issuer_id\n     }\n \n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::issue",
+      "return_type": "-> Result<Claim, ClaimReject>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 119
+        },
+        "start": {
+          "column": 5,
+          "line": 91
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:99:9: replace Claim::issue -> Result<Claim, ClaimReject> with Ok(Default::default())",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 11,
+        "line": 118
+      },
+      "start": {
+        "column": 9,
+        "line": 99
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Claim::issuer_id -> &Did with Box::leak(Box::new(Default::default()))\n@@ -116,17 +116,17 @@\n             body_hash: to_hex(&body_hash),\n             issuer_signature: to_hex(&issuer.sign(&signing)),\n         })\n     }\n \n     /// The issuer this claim *claims* to be from — used to resolve the trusted key. Reading\n     /// it does not imply trust; verification still decides.\n     pub fn issuer_id(&self) -> &Did {\n-        &self.issuer_id\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn claim_id(&self) -> &ClaimId {\n         &self.claim_id\n     }\n \n     /// Verify this claim against the issuer's trusted key. On success returns a\n     /// [`VerifiedClaim`] — the only way to read the body.\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::issuer_id",
+      "return_type": "-> &Did",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 125
+        },
+        "start": {
+          "column": 5,
+          "line": 121
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:124:9: replace Claim::issuer_id -> &Did with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 24,
+        "line": 124
+      },
+      "start": {
+        "column": 9,
+        "line": 124
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Claim::claim_id -> &ClaimId with Box::leak(Box::new(Default::default()))\n@@ -120,17 +120,17 @@\n \n     /// The issuer this claim *claims* to be from — used to resolve the trusted key. Reading\n     /// it does not imply trust; verification still decides.\n     pub fn issuer_id(&self) -> &Did {\n         &self.issuer_id\n     }\n \n     pub fn claim_id(&self) -> &ClaimId {\n-        &self.claim_id\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Verify this claim against the issuer's trusted key. On success returns a\n     /// [`VerifiedClaim`] — the only way to read the body.\n     pub fn verify(&self, issuer_vk: &VerifyingKey) -> Result<VerifiedClaim, ClaimReject> {\n         if Did::from_key(issuer_vk) != self.issuer_id {\n             return Err(ClaimReject::IssuerKeyMismatch);\n         }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::claim_id",
+      "return_type": "-> &ClaimId",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 129
+        },
+        "start": {
+          "column": 5,
+          "line": 127
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:128:9: replace Claim::claim_id -> &ClaimId with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 23,
+        "line": 128
+      },
+      "start": {
+        "column": 9,
+        "line": 128
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace Claim::verify -> Result<VerifiedClaim, ClaimReject> with Ok(Default::default())\n@@ -126,39 +126,17 @@\n \n     pub fn claim_id(&self) -> &ClaimId {\n         &self.claim_id\n     }\n \n     /// Verify this claim against the issuer's trusted key. On success returns a\n     /// [`VerifiedClaim`] — the only way to read the body.\n     pub fn verify(&self, issuer_vk: &VerifyingKey) -> Result<VerifiedClaim, ClaimReject> {\n-        if Did::from_key(issuer_vk) != self.issuer_id {\n-            return Err(ClaimReject::IssuerKeyMismatch);\n-        }\n-        let body_hash = hash_body(&self.body)?;\n-        if to_hex(&body_hash) != self.body_hash {\n-            return Err(ClaimReject::BodyTampered);\n-        }\n-        let signing = signing_bytes(\n-            &self.subject_id,\n-            &self.issuer_id,\n-            &self.claim_type,\n-            &self.schema_id,\n-            &self.validity,\n-            &body_hash,\n-        );\n-        if ClaimId::from_signing_bytes(&signing) != self.claim_id {\n-            return Err(ClaimReject::ClaimIdMismatch);\n-        }\n-        let sig = decode_array::<64>(&self.issuer_signature).map_err(|_| ClaimReject::Malformed)?;\n-        issuer_vk\n-            .verify(&signing, &sig)\n-            .map_err(|_| ClaimReject::BadSignature)?;\n-        Ok(VerifiedClaim(self.clone()))\n+        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// A claim whose issuer signature has been checked. The body is now safe to read.\n pub struct VerifiedClaim(Claim);\n \n impl VerifiedClaim {\n     pub fn subject_id(&self) -> &Did {\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::verify",
+      "return_type": "-> Result<VerifiedClaim, ClaimReject>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 157
+        },
+        "start": {
+          "column": 5,
+          "line": 131
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:134:9: replace Claim::verify -> Result<VerifiedClaim, ClaimReject> with Ok(Default::default())",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 40,
+        "line": 156
+      },
+      "start": {
+        "column": 9,
+        "line": 134
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace != with == in Claim::verify\n@@ -126,17 +126,17 @@\n \n     pub fn claim_id(&self) -> &ClaimId {\n         &self.claim_id\n     }\n \n     /// Verify this claim against the issuer's trusted key. On success returns a\n     /// [`VerifiedClaim`] — the only way to read the body.\n     pub fn verify(&self, issuer_vk: &VerifyingKey) -> Result<VerifiedClaim, ClaimReject> {\n-        if Did::from_key(issuer_vk) != self.issuer_id {\n+        if Did::from_key(issuer_vk) == /* ~ changed by cargo-mutants ~ */ self.issuer_id {\n             return Err(ClaimReject::IssuerKeyMismatch);\n         }\n         let body_hash = hash_body(&self.body)?;\n         if to_hex(&body_hash) != self.body_hash {\n             return Err(ClaimReject::BodyTampered);\n         }\n         let signing = signing_bytes(\n             &self.subject_id,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::verify",
+      "return_type": "-> Result<VerifiedClaim, ClaimReject>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 157
+        },
+        "start": {
+          "column": 5,
+          "line": 131
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:134:37: replace != with == in Claim::verify",
+    "package": "aion-trust-claims",
+    "replacement": "==",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 134
+      },
+      "start": {
+        "column": 37,
+        "line": 134
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace != with == in Claim::verify\n@@ -130,17 +130,17 @@\n \n     /// Verify this claim against the issuer's trusted key. On success returns a\n     /// [`VerifiedClaim`] — the only way to read the body.\n     pub fn verify(&self, issuer_vk: &VerifyingKey) -> Result<VerifiedClaim, ClaimReject> {\n         if Did::from_key(issuer_vk) != self.issuer_id {\n             return Err(ClaimReject::IssuerKeyMismatch);\n         }\n         let body_hash = hash_body(&self.body)?;\n-        if to_hex(&body_hash) != self.body_hash {\n+        if to_hex(&body_hash) == /* ~ changed by cargo-mutants ~ */ self.body_hash {\n             return Err(ClaimReject::BodyTampered);\n         }\n         let signing = signing_bytes(\n             &self.subject_id,\n             &self.issuer_id,\n             &self.claim_type,\n             &self.schema_id,\n             &self.validity,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::verify",
+      "return_type": "-> Result<VerifiedClaim, ClaimReject>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 157
+        },
+        "start": {
+          "column": 5,
+          "line": 131
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:138:31: replace != with == in Claim::verify",
+    "package": "aion-trust-claims",
+    "replacement": "==",
+    "span": {
+      "end": {
+        "column": 33,
+        "line": 138
+      },
+      "start": {
+        "column": 31,
+        "line": 138
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace != with == in Claim::verify\n@@ -141,17 +141,17 @@\n         let signing = signing_bytes(\n             &self.subject_id,\n             &self.issuer_id,\n             &self.claim_type,\n             &self.schema_id,\n             &self.validity,\n             &body_hash,\n         );\n-        if ClaimId::from_signing_bytes(&signing) != self.claim_id {\n+        if ClaimId::from_signing_bytes(&signing) == /* ~ changed by cargo-mutants ~ */ self.claim_id {\n             return Err(ClaimReject::ClaimIdMismatch);\n         }\n         let sig = decode_array::<64>(&self.issuer_signature).map_err(|_| ClaimReject::Malformed)?;\n         issuer_vk\n             .verify(&signing, &sig)\n             .map_err(|_| ClaimReject::BadSignature)?;\n         Ok(VerifiedClaim(self.clone()))\n     }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "Claim::verify",
+      "return_type": "-> Result<VerifiedClaim, ClaimReject>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 157
+        },
+        "start": {
+          "column": 5,
+          "line": 131
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/claim.rs:149:50: replace != with == in Claim::verify",
+    "package": "aion-trust-claims",
+    "replacement": "==",
+    "span": {
+      "end": {
+        "column": 52,
+        "line": 149
+      },
+      "start": {
+        "column": 50,
+        "line": 149
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::subject_id -> &Did with Box::leak(Box::new(Default::default()))\n@@ -157,17 +157,17 @@\n     }\n }\n \n /// A claim whose issuer signature has been checked. The body is now safe to read.\n pub struct VerifiedClaim(Claim);\n \n impl VerifiedClaim {\n     pub fn subject_id(&self) -> &Did {\n-        &self.0.subject_id\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     pub fn issuer_id(&self) -> &Did {\n         &self.0.issuer_id\n     }\n     pub fn claim_id(&self) -> &ClaimId {\n         &self.0.claim_id\n     }\n     pub fn claim_type(&self) -> &ClaimType {\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::subject_id",
+      "return_type": "-> &Did",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 166
+        },
+        "start": {
+          "column": 5,
+          "line": 164
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:165:9: replace VerifiedClaim::subject_id -> &Did with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 27,
+        "line": 165
+      },
+      "start": {
+        "column": 9,
+        "line": 165
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::issuer_id -> &Did with Box::leak(Box::new(Default::default()))\n@@ -160,17 +160,17 @@\n /// A claim whose issuer signature has been checked. The body is now safe to read.\n pub struct VerifiedClaim(Claim);\n \n impl VerifiedClaim {\n     pub fn subject_id(&self) -> &Did {\n         &self.0.subject_id\n     }\n     pub fn issuer_id(&self) -> &Did {\n-        &self.0.issuer_id\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     pub fn claim_id(&self) -> &ClaimId {\n         &self.0.claim_id\n     }\n     pub fn claim_type(&self) -> &ClaimType {\n         &self.0.claim_type\n     }\n     pub fn validity(&self) -> &Validity {\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::issuer_id",
+      "return_type": "-> &Did",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 169
+        },
+        "start": {
+          "column": 5,
+          "line": 167
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:168:9: replace VerifiedClaim::issuer_id -> &Did with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 168
+      },
+      "start": {
+        "column": 9,
+        "line": 168
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::claim_id -> &ClaimId with Box::leak(Box::new(Default::default()))\n@@ -163,17 +163,17 @@\n impl VerifiedClaim {\n     pub fn subject_id(&self) -> &Did {\n         &self.0.subject_id\n     }\n     pub fn issuer_id(&self) -> &Did {\n         &self.0.issuer_id\n     }\n     pub fn claim_id(&self) -> &ClaimId {\n-        &self.0.claim_id\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     pub fn claim_type(&self) -> &ClaimType {\n         &self.0.claim_type\n     }\n     pub fn validity(&self) -> &Validity {\n         &self.0.validity\n     }\n     /// The trusted body — reachable only after verification.\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::claim_id",
+      "return_type": "-> &ClaimId",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 172
+        },
+        "start": {
+          "column": 5,
+          "line": 170
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:171:9: replace VerifiedClaim::claim_id -> &ClaimId with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 25,
+        "line": 171
+      },
+      "start": {
+        "column": 9,
+        "line": 171
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::claim_type -> &ClaimType with Box::leak(Box::new(Default::default()))\n@@ -166,17 +166,17 @@\n     }\n     pub fn issuer_id(&self) -> &Did {\n         &self.0.issuer_id\n     }\n     pub fn claim_id(&self) -> &ClaimId {\n         &self.0.claim_id\n     }\n     pub fn claim_type(&self) -> &ClaimType {\n-        &self.0.claim_type\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     pub fn validity(&self) -> &Validity {\n         &self.0.validity\n     }\n     /// The trusted body — reachable only after verification.\n     pub fn body(&self) -> &EmploymentBody {\n         &self.0.body\n     }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::claim_type",
+      "return_type": "-> &ClaimType",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 175
+        },
+        "start": {
+          "column": 5,
+          "line": 173
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:174:9: replace VerifiedClaim::claim_type -> &ClaimType with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 27,
+        "line": 174
+      },
+      "start": {
+        "column": 9,
+        "line": 174
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::validity -> &Validity with Box::leak(Box::new(Default::default()))\n@@ -169,17 +169,17 @@\n     }\n     pub fn claim_id(&self) -> &ClaimId {\n         &self.0.claim_id\n     }\n     pub fn claim_type(&self) -> &ClaimType {\n         &self.0.claim_type\n     }\n     pub fn validity(&self) -> &Validity {\n-        &self.0.validity\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     /// The trusted body — reachable only after verification.\n     pub fn body(&self) -> &EmploymentBody {\n         &self.0.body\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n         self.0.validity.active_at(now)\n     }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::validity",
+      "return_type": "-> &Validity",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 178
+        },
+        "start": {
+          "column": 5,
+          "line": 176
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:177:9: replace VerifiedClaim::validity -> &Validity with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 25,
+        "line": 177
+      },
+      "start": {
+        "column": 9,
+        "line": 177
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::body -> &EmploymentBody with Box::leak(Box::new(Default::default()))\n@@ -173,17 +173,17 @@\n     pub fn claim_type(&self) -> &ClaimType {\n         &self.0.claim_type\n     }\n     pub fn validity(&self) -> &Validity {\n         &self.0.validity\n     }\n     /// The trusted body — reachable only after verification.\n     pub fn body(&self) -> &EmploymentBody {\n-        &self.0.body\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n         self.0.validity.active_at(now)\n     }\n }\n \n fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {\n     let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::body",
+      "return_type": "-> &EmploymentBody",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 182
+        },
+        "start": {
+          "column": 5,
+          "line": 179
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:181:9: replace VerifiedClaim::body -> &EmploymentBody with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-claims",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 21,
+        "line": 181
+      },
+      "start": {
+        "column": 9,
+        "line": 181
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::active_at -> bool with true\n@@ -176,17 +176,17 @@\n     pub fn validity(&self) -> &Validity {\n         &self.0.validity\n     }\n     /// The trusted body — reachable only after verification.\n     pub fn body(&self) -> &EmploymentBody {\n         &self.0.body\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        self.0.validity.active_at(now)\n+        true /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {\n     let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;\n     Ok(crypto::hash(&bytes))\n }\n \n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 185
+        },
+        "start": {
+          "column": 5,
+          "line": 183
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:184:9: replace VerifiedClaim::active_at -> bool with true",
+    "package": "aion-trust-claims",
+    "replacement": "true",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 184
+      },
+      "start": {
+        "column": 9,
+        "line": 184
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace VerifiedClaim::active_at -> bool with false\n@@ -176,17 +176,17 @@\n     pub fn validity(&self) -> &Validity {\n         &self.0.validity\n     }\n     /// The trusted body — reachable only after verification.\n     pub fn body(&self) -> &EmploymentBody {\n         &self.0.body\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n-        self.0.validity.active_at(now)\n+        false /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {\n     let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;\n     Ok(crypto::hash(&bytes))\n }\n \n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "VerifiedClaim::active_at",
+      "return_type": "-> bool",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 185
+        },
+        "start": {
+          "column": 5,
+          "line": 183
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:184:9: replace VerifiedClaim::active_at -> bool with false",
+    "package": "aion-trust-claims",
+    "replacement": "false",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 184
+      },
+      "start": {
+        "column": 9,
+        "line": 184
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace hash_body -> Result<[u8; 32], ClaimReject> with Ok([0; 32])\n@@ -181,18 +181,17 @@\n         &self.0.body\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n         self.0.validity.active_at(now)\n     }\n }\n \n fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {\n-    let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;\n-    Ok(crypto::hash(&bytes))\n+    Ok([0; 32]) /* ~ changed by cargo-mutants ~ */\n }\n \n fn signing_bytes(\n     subject: &Did,\n     issuer: &Did,\n     claim_type: &ClaimType,\n     schema: &str,\n     validity: &Validity,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "hash_body",
+      "return_type": "-> Result<[u8; 32], ClaimReject>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 191
+        },
+        "start": {
+          "column": 1,
+          "line": 188
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:189:5: replace hash_body -> Result<[u8; 32], ClaimReject> with Ok([0; 32])",
+    "package": "aion-trust-claims",
+    "replacement": "Ok([0; 32])",
+    "span": {
+      "end": {
+        "column": 29,
+        "line": 190
+      },
+      "start": {
+        "column": 5,
+        "line": 189
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace hash_body -> Result<[u8; 32], ClaimReject> with Ok([1; 32])\n@@ -181,18 +181,17 @@\n         &self.0.body\n     }\n     pub fn active_at(&self, now: Timestamp) -> bool {\n         self.0.validity.active_at(now)\n     }\n }\n \n fn hash_body(body: &EmploymentBody) -> Result<[u8; 32], ClaimReject> {\n-    let bytes = serde_json::to_vec(body).map_err(|_| ClaimReject::Malformed)?;\n-    Ok(crypto::hash(&bytes))\n+    Ok([1; 32]) /* ~ changed by cargo-mutants ~ */\n }\n \n fn signing_bytes(\n     subject: &Did,\n     issuer: &Did,\n     claim_type: &ClaimType,\n     schema: &str,\n     validity: &Validity,\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "hash_body",
+      "return_type": "-> Result<[u8; 32], ClaimReject>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 191
+        },
+        "start": {
+          "column": 1,
+          "line": 188
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:189:5: replace hash_body -> Result<[u8; 32], ClaimReject> with Ok([1; 32])",
+    "package": "aion-trust-claims",
+    "replacement": "Ok([1; 32])",
+    "span": {
+      "end": {
+        "column": 29,
+        "line": 190
+      },
+      "start": {
+        "column": 5,
+        "line": 189
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace signing_bytes -> Vec<u8> with vec![]\n@@ -193,25 +193,10 @@\n fn signing_bytes(\n     subject: &Did,\n     issuer: &Did,\n     claim_type: &ClaimType,\n     schema: &str,\n     validity: &Validity,\n     body_hash: &[u8; 32],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(CLAIM_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(issuer.as_bytes())\n-        .field(claim_type.tag())\n-        .field(schema.as_bytes())\n-        .int(validity.from.0);\n-    match validity.until {\n-        Some(t) => {\n-            w.field(b\"until\").int(t.0);\n-        }\n-        None => {\n-            w.field(b\"open\");\n-        }\n-    }\n-    w.field(body_hash);\n-    w.into_bytes()\n+    vec![] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 217
+        },
+        "start": {
+          "column": 1,
+          "line": 193
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:201:5: replace signing_bytes -> Vec<u8> with vec![]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 216
+      },
+      "start": {
+        "column": 5,
+        "line": 201
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace signing_bytes -> Vec<u8> with vec![0]\n@@ -193,25 +193,10 @@\n fn signing_bytes(\n     subject: &Did,\n     issuer: &Did,\n     claim_type: &ClaimType,\n     schema: &str,\n     validity: &Validity,\n     body_hash: &[u8; 32],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(CLAIM_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(issuer.as_bytes())\n-        .field(claim_type.tag())\n-        .field(schema.as_bytes())\n-        .int(validity.from.0);\n-    match validity.until {\n-        Some(t) => {\n-            w.field(b\"until\").int(t.0);\n-        }\n-        None => {\n-            w.field(b\"open\");\n-        }\n-    }\n-    w.field(body_hash);\n-    w.into_bytes()\n+    vec![0] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 217
+        },
+        "start": {
+          "column": 1,
+          "line": 193
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:201:5: replace signing_bytes -> Vec<u8> with vec![0]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![0]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 216
+      },
+      "start": {
+        "column": 5,
+        "line": 201
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/claim.rs\n+++ replace signing_bytes -> Vec<u8> with vec![1]\n@@ -193,25 +193,10 @@\n fn signing_bytes(\n     subject: &Did,\n     issuer: &Did,\n     claim_type: &ClaimType,\n     schema: &str,\n     validity: &Validity,\n     body_hash: &[u8; 32],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(CLAIM_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(issuer.as_bytes())\n-        .field(claim_type.tag())\n-        .field(schema.as_bytes())\n-        .int(validity.from.0);\n-    match validity.until {\n-        Some(t) => {\n-            w.field(b\"until\").int(t.0);\n-        }\n-        None => {\n-            w.field(b\"open\");\n-        }\n-    }\n-    w.field(body_hash);\n-    w.into_bytes()\n+    vec![1] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/claim.rs",
+    "function": {
+      "function_name": "signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 217
+        },
+        "start": {
+          "column": 1,
+          "line": 193
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/claim.rs:201:5: replace signing_bytes -> Vec<u8> with vec![1]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![1]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 216
+      },
+      "start": {
+        "column": 5,
+        "line": 201
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace build_presentation -> Presentation with Default::default()\n@@ -41,37 +41,17 @@\n     subject: &Identity,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n     issued_at: Timestamp,\n     expires_at: Timestamp,\n     claims: Vec<Claim>,\n ) -> Presentation {\n-    let signing = pres_signing_bytes(\n-        &subject.did(),\n-        audience,\n-        purpose,\n-        nonce,\n-        issued_at,\n-        expires_at,\n-        &claims,\n-    );\n-    Presentation {\n-        presentation_id: to_hex(&aion_context::crypto::hash(&signing)),\n-        subject_id: subject.did(),\n-        subject_key: to_hex(&subject.verifying_key().to_bytes()),\n-        audience: audience.clone(),\n-        purpose: purpose.to_string(),\n-        nonce: to_hex(nonce),\n-        issued_at,\n-        expires_at,\n-        claims,\n-        subject_signature: to_hex(&subject.sign(&signing)),\n-    }\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n /// The verifier's trust anchor: the public keys of issuers it recognizes. (Phase 3 replaces\n /// this with accreditation records resolved against aion-context.)\n #[derive(Default)]\n pub struct IssuerDirectory {\n     keys: HashMap<Did, VerifyingKey>,\n }\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "build_presentation",
+      "return_type": "-> Presentation",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 70
+        },
+        "start": {
+          "column": 1,
+          "line": 37
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:49:5: replace build_presentation -> Presentation with Default::default()",
+    "package": "aion-trust-claims",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 69
+      },
+      "start": {
+        "column": 5,
+        "line": 49
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace IssuerDirectory::register with ()\n@@ -78,17 +78,17 @@\n \n impl IssuerDirectory {\n     pub fn new() -> Self {\n         Self::default()\n     }\n \n     /// Recognize an issuer by its public key; it is indexed under the did that key derives.\n     pub fn register(&mut self, vk: VerifyingKey) {\n-        self.keys.insert(Did::from_key(&vk), vk);\n+        () /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn get(&self, id: &Did) -> Option<&VerifyingKey> {\n         self.keys.get(id)\n     }\n }\n \n /// One verification step and whether it passed.\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "IssuerDirectory::register",
+      "return_type": "",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 87
+        },
+        "start": {
+          "column": 5,
+          "line": 84
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:86:9: replace IssuerDirectory::register with ()",
+    "package": "aion-trust-claims",
+    "replacement": "()",
+    "span": {
+      "end": {
+        "column": 50,
+        "line": 86
+      },
+      "start": {
+        "column": 9,
+        "line": 86
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace IssuerDirectory::get -> Option<&VerifyingKey> with None\n@@ -82,17 +82,17 @@\n     }\n \n     /// Recognize an issuer by its public key; it is indexed under the did that key derives.\n     pub fn register(&mut self, vk: VerifyingKey) {\n         self.keys.insert(Did::from_key(&vk), vk);\n     }\n \n     pub fn get(&self, id: &Did) -> Option<&VerifyingKey> {\n-        self.keys.get(id)\n+        None /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// One verification step and whether it passed.\n #[derive(Clone, Debug, Serialize)]\n pub struct Check {\n     pub name: String,\n     pub passed: bool,\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "IssuerDirectory::get",
+      "return_type": "-> Option<&VerifyingKey>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 91
+        },
+        "start": {
+          "column": 5,
+          "line": 89
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:90:9: replace IssuerDirectory::get -> Option<&VerifyingKey> with None",
+    "package": "aion-trust-claims",
+    "replacement": "None",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 90
+      },
+      "start": {
+        "column": 9,
+        "line": 90
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace IssuerDirectory::get -> Option<&VerifyingKey> with Some(Box::leak(Box::new(Default::default())))\n@@ -82,17 +82,17 @@\n     }\n \n     /// Recognize an issuer by its public key; it is indexed under the did that key derives.\n     pub fn register(&mut self, vk: VerifyingKey) {\n         self.keys.insert(Did::from_key(&vk), vk);\n     }\n \n     pub fn get(&self, id: &Did) -> Option<&VerifyingKey> {\n-        self.keys.get(id)\n+        Some(Box::leak(Box::new(Default::default()))) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// One verification step and whether it passed.\n #[derive(Clone, Debug, Serialize)]\n pub struct Check {\n     pub name: String,\n     pub passed: bool,\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "IssuerDirectory::get",
+      "return_type": "-> Option<&VerifyingKey>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 91
+        },
+        "start": {
+          "column": 5,
+          "line": 89
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:90:9: replace IssuerDirectory::get -> Option<&VerifyingKey> with Some(Box::leak(Box::new(Default::default())))",
+    "package": "aion-trust-claims",
+    "replacement": "Some(Box::leak(Box::new(Default::default())))",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 90
+      },
+      "start": {
+        "column": 9,
+        "line": 90
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace check with ()\n@@ -102,21 +102,17 @@\n /// The full result of verifying a presentation. `accepted` iff every check passed.\n #[derive(Clone, Debug, Serialize)]\n pub struct VerificationReport {\n     pub accepted: bool,\n     pub checks: Vec<Check>,\n }\n \n fn check(checks: &mut Vec<Check>, name: &str, passed: bool, detail: impl Into<String>) {\n-    checks.push(Check {\n-        name: name.to_string(),\n-        passed,\n-        detail: detail.into(),\n-    });\n+    () /* ~ changed by cargo-mutants ~ */\n }\n \n /// Verify a presentation offline. `audience` is the verifier's own did; `now` the current\n /// time; `nonce_already_seen` lets a caller enforce single-use nonces (Phase 4 stores them).\n pub fn verify_presentation(\n     p: &Presentation,\n     audience: &Did,\n     now: Timestamp,\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "check",
+      "return_type": "",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 115
+        },
+        "start": {
+          "column": 1,
+          "line": 109
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:110:5: replace check with ()",
+    "package": "aion-trust-claims",
+    "replacement": "()",
+    "span": {
+      "end": {
+        "column": 8,
+        "line": 114
+      },
+      "start": {
+        "column": 5,
+        "line": 110
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace verify_presentation -> Result<VerificationReport> with Ok(Default::default())\n@@ -118,40 +118,17 @@\n /// time; `nonce_already_seen` lets a caller enforce single-use nonces (Phase 4 stores them).\n pub fn verify_presentation(\n     p: &Presentation,\n     audience: &Did,\n     now: Timestamp,\n     directory: &IssuerDirectory,\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n-    let mut checks = Vec::new();\n-    let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n-\n-    let binds = Did::from_key(&subject_vk) == p.subject_id;\n-    check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n-    check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n-    let unexpired = now >= p.issued_at && now <= p.expires_at;\n-    check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n-    check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n-\n-    let signing = pres_signing_bytes(\n-        &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n-        p.issued_at, p.expires_at, &p.claims,\n-    );\n-    let sig = decode_array::<64>(&p.subject_signature)?;\n-    let sig_ok = subject_vk.verify(&signing, &sig).is_ok();\n-    check(&mut checks, \"subject signature valid\", sig_ok, String::new());\n-\n-    for claim in &p.claims {\n-        verify_one_claim(&mut checks, claim, &p.subject_id, now, directory);\n-    }\n-\n-    let accepted = checks.iter().all(|c| c.passed);\n-    Ok(VerificationReport { accepted, checks })\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn verify_one_claim(\n     checks: &mut Vec<Check>,\n     claim: &Claim,\n     presenter: &Did,\n     now: Timestamp,\n     directory: &IssuerDirectory,\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:126:5: replace verify_presentation -> Result<VerificationReport> with Ok(Default::default())",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 48,
+        "line": 149
+      },
+      "start": {
+        "column": 5,
+        "line": 126
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace == with != in verify_presentation\n@@ -121,17 +121,17 @@\n     audience: &Did,\n     now: Timestamp,\n     directory: &IssuerDirectory,\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n-    let binds = Did::from_key(&subject_vk) == p.subject_id;\n+    let binds = Did::from_key(&subject_vk) != /* ~ changed by cargo-mutants ~ */ p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n     check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n     let unexpired = now >= p.issued_at && now <= p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n     check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:129:44: replace == with != in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": "!=",
+    "span": {
+      "end": {
+        "column": 46,
+        "line": 129
+      },
+      "start": {
+        "column": 44,
+        "line": 129
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace == with != in verify_presentation\n@@ -123,17 +123,17 @@\n     directory: &IssuerDirectory,\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n     let binds = Did::from_key(&subject_vk) == p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n-    check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n+    check(&mut checks, \"audience matches verifier\", &p.audience != /* ~ changed by cargo-mutants ~ */ audience, p.audience.to_string());\n     let unexpired = now >= p.issued_at && now <= p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n     check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n         p.issued_at, p.expires_at, &p.claims,\n     );\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:131:65: replace == with != in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": "!=",
+    "span": {
+      "end": {
+        "column": 67,
+        "line": 131
+      },
+      "start": {
+        "column": 65,
+        "line": 131
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace && with || in verify_presentation\n@@ -124,17 +124,17 @@\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n     let binds = Did::from_key(&subject_vk) == p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n     check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n-    let unexpired = now >= p.issued_at && now <= p.expires_at;\n+    let unexpired = now >= p.issued_at || /* ~ changed by cargo-mutants ~ */ now <= p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n     check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n         p.issued_at, p.expires_at, &p.claims,\n     );\n     let sig = decode_array::<64>(&p.subject_signature)?;\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:132:40: replace && with || in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": "||",
+    "span": {
+      "end": {
+        "column": 42,
+        "line": 132
+      },
+      "start": {
+        "column": 40,
+        "line": 132
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace >= with < in verify_presentation\n@@ -124,17 +124,17 @@\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n     let binds = Did::from_key(&subject_vk) == p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n     check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n-    let unexpired = now >= p.issued_at && now <= p.expires_at;\n+    let unexpired = now < /* ~ changed by cargo-mutants ~ */ p.issued_at && now <= p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n     check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n         p.issued_at, p.expires_at, &p.claims,\n     );\n     let sig = decode_array::<64>(&p.subject_signature)?;\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:132:25: replace >= with < in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": "<",
+    "span": {
+      "end": {
+        "column": 27,
+        "line": 132
+      },
+      "start": {
+        "column": 25,
+        "line": 132
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace <= with > in verify_presentation\n@@ -124,17 +124,17 @@\n     nonce_already_seen: bool,\n ) -> Result<VerificationReport> {\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n     let binds = Did::from_key(&subject_vk) == p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n     check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n-    let unexpired = now >= p.issued_at && now <= p.expires_at;\n+    let unexpired = now >= p.issued_at && now > /* ~ changed by cargo-mutants ~ */ p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n     check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n         p.issued_at, p.expires_at, &p.claims,\n     );\n     let sig = decode_array::<64>(&p.subject_signature)?;\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:132:47: replace <= with > in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": ">",
+    "span": {
+      "end": {
+        "column": 49,
+        "line": 132
+      },
+      "start": {
+        "column": 47,
+        "line": 132
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ delete ! in verify_presentation\n@@ -126,17 +126,17 @@\n     let mut checks = Vec::new();\n     let subject_vk = verifying_key_from_hex(&p.subject_key)?;\n \n     let binds = Did::from_key(&subject_vk) == p.subject_id;\n     check(&mut checks, \"subject_id binds to key\", binds, p.subject_id.to_string());\n     check(&mut checks, \"audience matches verifier\", &p.audience == audience, p.audience.to_string());\n     let unexpired = now >= p.issued_at && now <= p.expires_at;\n     check(&mut checks, \"unexpired\", unexpired, format!(\"now={}, expires={}\", now.0, p.expires_at.0));\n-    check(&mut checks, \"nonce fresh (not replayed)\", !nonce_already_seen, p.nonce.clone());\n+    check(&mut checks, \"nonce fresh (not replayed)\",  /* ~ changed by cargo-mutants ~ */nonce_already_seen, p.nonce.clone());\n \n     let signing = pres_signing_bytes(\n         &p.subject_id, &p.audience, &p.purpose, &decode_nonce(&p.nonce)?,\n         p.issued_at, p.expires_at, &p.claims,\n     );\n     let sig = decode_array::<64>(&p.subject_signature)?;\n     let sig_ok = subject_vk.verify(&signing, &sig).is_ok();\n     check(&mut checks, \"subject signature valid\", sig_ok, String::new());\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_presentation",
+      "return_type": "-> Result<VerificationReport>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 150
+        },
+        "start": {
+          "column": 1,
+          "line": 117
+        }
+      }
+    },
+    "genre": "UnaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:134:54: delete ! in verify_presentation",
+    "package": "aion-trust-claims",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 55,
+        "line": 134
+      },
+      "start": {
+        "column": 54,
+        "line": 134
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace verify_one_claim with ()\n@@ -151,30 +151,17 @@\n \n fn verify_one_claim(\n     checks: &mut Vec<Check>,\n     claim: &Claim,\n     presenter: &Did,\n     now: Timestamp,\n     directory: &IssuerDirectory,\n ) {\n-    let id = claim.claim_id().as_str().to_string();\n-    check(checks, \"claim subject matches presenter\", &claim.subject_id == presenter, id.clone());\n-\n-    let Some(issuer_vk) = directory.get(claim.issuer_id()) else {\n-        check(checks, \"issuer recognized\", false, format!(\"unknown issuer {}\", claim.issuer_id()));\n-        return;\n-    };\n-    match claim.verify(issuer_vk) {\n-        Ok(verified) => {\n-            check(checks, \"claim authentic\", true, id);\n-            check(checks, \"claim within validity\", verified.active_at(now), String::new());\n-        }\n-        Err(reject) => check(checks, \"claim authentic\", false, reject.to_string()),\n-    }\n+    () /* ~ changed by cargo-mutants ~ */\n }\n \n fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {\n     aion_trust_core::encoding::from_hex(nonce_hex)\n }\n \n #[allow(clippy::too_many_arguments)] // mirrors the signed fields; grouping would obscure them\n fn pres_signing_bytes(\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_one_claim",
+      "return_type": "",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 173
+        },
+        "start": {
+          "column": 1,
+          "line": 152
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:159:5: replace verify_one_claim with ()",
+    "package": "aion-trust-claims",
+    "replacement": "()",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 172
+      },
+      "start": {
+        "column": 5,
+        "line": 159
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace == with != in verify_one_claim\n@@ -152,17 +152,17 @@\n fn verify_one_claim(\n     checks: &mut Vec<Check>,\n     claim: &Claim,\n     presenter: &Did,\n     now: Timestamp,\n     directory: &IssuerDirectory,\n ) {\n     let id = claim.claim_id().as_str().to_string();\n-    check(checks, \"claim subject matches presenter\", &claim.subject_id == presenter, id.clone());\n+    check(checks, \"claim subject matches presenter\", &claim.subject_id != /* ~ changed by cargo-mutants ~ */ presenter, id.clone());\n \n     let Some(issuer_vk) = directory.get(claim.issuer_id()) else {\n         check(checks, \"issuer recognized\", false, format!(\"unknown issuer {}\", claim.issuer_id()));\n         return;\n     };\n     match claim.verify(issuer_vk) {\n         Ok(verified) => {\n             check(checks, \"claim authentic\", true, id);\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "verify_one_claim",
+      "return_type": "",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 173
+        },
+        "start": {
+          "column": 1,
+          "line": 152
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-claims/src/presentation.rs:160:72: replace == with != in verify_one_claim",
+    "package": "aion-trust-claims",
+    "replacement": "!=",
+    "span": {
+      "end": {
+        "column": 74,
+        "line": 160
+      },
+      "start": {
+        "column": 72,
+        "line": 160
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace decode_nonce -> Result<Vec<u8>> with Ok(vec![])\n@@ -168,17 +168,17 @@\n             check(checks, \"claim authentic\", true, id);\n             check(checks, \"claim within validity\", verified.active_at(now), String::new());\n         }\n         Err(reject) => check(checks, \"claim authentic\", false, reject.to_string()),\n     }\n }\n \n fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {\n-    aion_trust_core::encoding::from_hex(nonce_hex)\n+    Ok(vec![]) /* ~ changed by cargo-mutants ~ */\n }\n \n #[allow(clippy::too_many_arguments)] // mirrors the signed fields; grouping would obscure them\n fn pres_signing_bytes(\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "decode_nonce",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 177
+        },
+        "start": {
+          "column": 1,
+          "line": 175
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:176:5: replace decode_nonce -> Result<Vec<u8>> with Ok(vec![])",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(vec![])",
+    "span": {
+      "end": {
+        "column": 51,
+        "line": 176
+      },
+      "start": {
+        "column": 5,
+        "line": 176
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace decode_nonce -> Result<Vec<u8>> with Ok(vec![0])\n@@ -168,17 +168,17 @@\n             check(checks, \"claim authentic\", true, id);\n             check(checks, \"claim within validity\", verified.active_at(now), String::new());\n         }\n         Err(reject) => check(checks, \"claim authentic\", false, reject.to_string()),\n     }\n }\n \n fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {\n-    aion_trust_core::encoding::from_hex(nonce_hex)\n+    Ok(vec![0]) /* ~ changed by cargo-mutants ~ */\n }\n \n #[allow(clippy::too_many_arguments)] // mirrors the signed fields; grouping would obscure them\n fn pres_signing_bytes(\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "decode_nonce",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 177
+        },
+        "start": {
+          "column": 1,
+          "line": 175
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:176:5: replace decode_nonce -> Result<Vec<u8>> with Ok(vec![0])",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(vec![0])",
+    "span": {
+      "end": {
+        "column": 51,
+        "line": 176
+      },
+      "start": {
+        "column": 5,
+        "line": 176
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace decode_nonce -> Result<Vec<u8>> with Ok(vec![1])\n@@ -168,17 +168,17 @@\n             check(checks, \"claim authentic\", true, id);\n             check(checks, \"claim within validity\", verified.active_at(now), String::new());\n         }\n         Err(reject) => check(checks, \"claim authentic\", false, reject.to_string()),\n     }\n }\n \n fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {\n-    aion_trust_core::encoding::from_hex(nonce_hex)\n+    Ok(vec![1]) /* ~ changed by cargo-mutants ~ */\n }\n \n #[allow(clippy::too_many_arguments)] // mirrors the signed fields; grouping would obscure them\n fn pres_signing_bytes(\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "decode_nonce",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 177
+        },
+        "start": {
+          "column": 1,
+          "line": 175
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:176:5: replace decode_nonce -> Result<Vec<u8>> with Ok(vec![1])",
+    "package": "aion-trust-claims",
+    "replacement": "Ok(vec![1])",
+    "span": {
+      "end": {
+        "column": 51,
+        "line": 176
+      },
+      "start": {
+        "column": 5,
+        "line": 176
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace pres_signing_bytes -> Vec<u8> with vec![]\n@@ -181,20 +181,10 @@\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n     issued_at: Timestamp,\n     expires_at: Timestamp,\n     claims: &[Claim],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(PRES_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(audience.as_bytes())\n-        .field(purpose.as_bytes())\n-        .field(nonce)\n-        .int(issued_at.0)\n-        .int(expires_at.0);\n-    for claim in claims {\n-        w.field(claim.claim_id().as_str().as_bytes());\n-    }\n-    w.into_bytes()\n+    vec![] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "pres_signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 200
+        },
+        "start": {
+          "column": 1,
+          "line": 179
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:189:5: replace pres_signing_bytes -> Vec<u8> with vec![]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 199
+      },
+      "start": {
+        "column": 5,
+        "line": 189
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace pres_signing_bytes -> Vec<u8> with vec![0]\n@@ -181,20 +181,10 @@\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n     issued_at: Timestamp,\n     expires_at: Timestamp,\n     claims: &[Claim],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(PRES_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(audience.as_bytes())\n-        .field(purpose.as_bytes())\n-        .field(nonce)\n-        .int(issued_at.0)\n-        .int(expires_at.0);\n-    for claim in claims {\n-        w.field(claim.claim_id().as_str().as_bytes());\n-    }\n-    w.into_bytes()\n+    vec![0] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "pres_signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 200
+        },
+        "start": {
+          "column": 1,
+          "line": 179
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:189:5: replace pres_signing_bytes -> Vec<u8> with vec![0]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![0]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 199
+      },
+      "start": {
+        "column": 5,
+        "line": 189
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-claims/src/presentation.rs\n+++ replace pres_signing_bytes -> Vec<u8> with vec![1]\n@@ -181,20 +181,10 @@\n     subject: &Did,\n     audience: &Did,\n     purpose: &str,\n     nonce: &[u8],\n     issued_at: Timestamp,\n     expires_at: Timestamp,\n     claims: &[Claim],\n ) -> Vec<u8> {\n-    let mut w = SigningWriter::new(PRES_DOMAIN);\n-    w.field(subject.as_bytes())\n-        .field(audience.as_bytes())\n-        .field(purpose.as_bytes())\n-        .field(nonce)\n-        .int(issued_at.0)\n-        .int(expires_at.0);\n-    for claim in claims {\n-        w.field(claim.claim_id().as_str().as_bytes());\n-    }\n-    w.into_bytes()\n+    vec![1] /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-claims/src/presentation.rs",
+    "function": {
+      "function_name": "pres_signing_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 200
+        },
+        "start": {
+          "column": 1,
+          "line": 179
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-claims/src/presentation.rs:189:5: replace pres_signing_bytes -> Vec<u8> with vec![1]",
+    "package": "aion-trust-claims",
+    "replacement": "vec![1]",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 199
+      },
+      "start": {
+        "column": 5,
+        "line": 189
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace main with ()\n@@ -71,20 +71,17 @@\n         #[arg(long = \"as\")]\n         audience: String,\n         #[arg(long = \"issuer-key\")]\n         issuer_keys: Vec<String>,\n     },\n }\n \n fn main() {\n-    if let Err(e) = run(Cli::parse()) {\n-        eprintln!(\"error: {e}\");\n-        std::process::exit(1);\n-    }\n+    () /* ~ changed by cargo-mutants ~ */\n }\n \n fn run(cli: Cli) -> Result<()> {\n     match cli.cmd {\n         Cmd::Keygen { out } => keygen(out),\n         Cmd::Issue { .. } => issue(cli.cmd),\n         Cmd::Present { .. } => present(cli.cmd),\n         Cmd::Verify { .. } => verify(cli.cmd),\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "main",
+      "return_type": "",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 83
+        },
+        "start": {
+          "column": 1,
+          "line": 78
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:79:5: replace main with ()",
+    "package": "aion-trust-cli",
+    "replacement": "()",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 82
+      },
+      "start": {
+        "column": 5,
+        "line": 79
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace run -> Result<()> with Ok(())\n@@ -78,22 +78,17 @@\n fn main() {\n     if let Err(e) = run(Cli::parse()) {\n         eprintln!(\"error: {e}\");\n         std::process::exit(1);\n     }\n }\n \n fn run(cli: Cli) -> Result<()> {\n-    match cli.cmd {\n-        Cmd::Keygen { out } => keygen(out),\n-        Cmd::Issue { .. } => issue(cli.cmd),\n-        Cmd::Present { .. } => present(cli.cmd),\n-        Cmd::Verify { .. } => verify(cli.cmd),\n-    }\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn keygen(out: Option<PathBuf>) -> Result<()> {\n     let id = Identity::generate();\n     let secret = id.secret_hex();\n     println!(\"did:    {}\", id.did());\n     println!(\"pubkey: {}\", aion_trust_core::encoding::to_hex(&id.verifying_key().to_bytes()));\n     if let Some(path) = out {\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "run",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 92
+        },
+        "start": {
+          "column": 1,
+          "line": 85
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:86:5: replace run -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 91
+      },
+      "start": {
+        "column": 5,
+        "line": 86
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace keygen -> Result<()> with Ok(())\n@@ -87,27 +87,17 @@\n         Cmd::Keygen { out } => keygen(out),\n         Cmd::Issue { .. } => issue(cli.cmd),\n         Cmd::Present { .. } => present(cli.cmd),\n         Cmd::Verify { .. } => verify(cli.cmd),\n     }\n }\n \n fn keygen(out: Option<PathBuf>) -> Result<()> {\n-    let id = Identity::generate();\n-    let secret = id.secret_hex();\n-    println!(\"did:    {}\", id.did());\n-    println!(\"pubkey: {}\", aion_trust_core::encoding::to_hex(&id.verifying_key().to_bytes()));\n-    if let Some(path) = out {\n-        std::fs::write(&path, &secret)?;\n-        println!(\"secret: written to {}\", path.display());\n-    } else {\n-        println!(\"secret: {secret}\");\n-    }\n-    Ok(())\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn issue(cmd: Cmd) -> Result<()> {\n     let Cmd::Issue {\n         issuer, subject, employer, title, start, end, employment_type, rehire, valid_until, out,\n     } = cmd\n     else {\n         unreachable!()\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "keygen",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 106
+        },
+        "start": {
+          "column": 1,
+          "line": 94
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:95:5: replace keygen -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 11,
+        "line": 105
+      },
+      "start": {
+        "column": 5,
+        "line": 95
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace issue -> Result<()> with Ok(())\n@@ -101,31 +101,17 @@\n         println!(\"secret: written to {}\", path.display());\n     } else {\n         println!(\"secret: {secret}\");\n     }\n     Ok(())\n }\n \n fn issue(cmd: Cmd) -> Result<()> {\n-    let Cmd::Issue {\n-        issuer, subject, employer, title, start, end, employment_type, rehire, valid_until, out,\n-    } = cmd\n-    else {\n-        unreachable!()\n-    };\n-    let issuer = load_identity(&issuer)?;\n-    let validity = Validity {\n-        from: Timestamp::now(),\n-        until: valid_until.map(Timestamp),\n-    };\n-    let body = EmploymentBody { employer, title, employment_type, start, end, rehire_eligible: rehire };\n-    let claim = Claim::issue(&issuer, &Did::from_string(subject), validity, body)\n-        .map_err(|e| TrustError::Decode(format!(\"issue failed: {e}\")))?;\n-    emit(&claim, out)\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn present(cmd: Cmd) -> Result<()> {\n     let Cmd::Present { subject, audience, purpose, claims, expires_in, out } = cmd else {\n         unreachable!()\n     };\n     let subject = load_identity(&subject)?;\n     let mut loaded = Vec::with_capacity(claims.len());\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "issue",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 124
+        },
+        "start": {
+          "column": 1,
+          "line": 108
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:109:5: replace issue -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 22,
+        "line": 123
+      },
+      "start": {
+        "column": 5,
+        "line": 109
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace present -> Result<()> with Ok(())\n@@ -119,31 +119,17 @@\n     };\n     let body = EmploymentBody { employer, title, employment_type, start, end, rehire_eligible: rehire };\n     let claim = Claim::issue(&issuer, &Did::from_string(subject), validity, body)\n         .map_err(|e| TrustError::Decode(format!(\"issue failed: {e}\")))?;\n     emit(&claim, out)\n }\n \n fn present(cmd: Cmd) -> Result<()> {\n-    let Cmd::Present { subject, audience, purpose, claims, expires_in, out } = cmd else {\n-        unreachable!()\n-    };\n-    let subject = load_identity(&subject)?;\n-    let mut loaded = Vec::with_capacity(claims.len());\n-    for path in &claims {\n-        loaded.push(read_json::<Claim>(path)?);\n-    }\n-    let now = Timestamp::now();\n-    let nonce = aion_context::crypto::generate_nonce();\n-    let presentation = build_presentation(\n-        &subject, &Did::from_string(audience), &purpose, &nonce, now,\n-        now.plus_seconds(expires_in), loaded,\n-    );\n-    emit(&presentation, out)\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn verify(cmd: Cmd) -> Result<()> {\n     let Cmd::Verify { presentation, audience, issuer_keys } = cmd else {\n         unreachable!()\n     };\n     let p = read_json::<Presentation>(&presentation)?;\n     let mut directory = IssuerDirectory::new();\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "present",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 142
+        },
+        "start": {
+          "column": 1,
+          "line": 126
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:127:5: replace present -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 29,
+        "line": 141
+      },
+      "start": {
+        "column": 5,
+        "line": 127
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace verify -> Result<()> with Ok(())\n@@ -137,31 +137,17 @@\n     let presentation = build_presentation(\n         &subject, &Did::from_string(audience), &purpose, &nonce, now,\n         now.plus_seconds(expires_in), loaded,\n     );\n     emit(&presentation, out)\n }\n \n fn verify(cmd: Cmd) -> Result<()> {\n-    let Cmd::Verify { presentation, audience, issuer_keys } = cmd else {\n-        unreachable!()\n-    };\n-    let p = read_json::<Presentation>(&presentation)?;\n-    let mut directory = IssuerDirectory::new();\n-    for key in &issuer_keys {\n-        directory.register(verifying_key_from_hex(key)?);\n-    }\n-    let report = verify_presentation(&p, &Did::from_string(audience), Timestamp::now(), &directory, false)?;\n-    for c in &report.checks {\n-        let mark = if c.passed { \"✓\" } else { \"✗\" };\n-        println!(\"  {mark} {}{}\", c.name, if c.detail.is_empty() { String::new() } else { format!(\"  ({})\", c.detail) });\n-    }\n-    println!(\"\\n{}\", if report.accepted { \"ACCEPTED\" } else { \"REJECTED\" });\n-    std::process::exit(if report.accepted { 0 } else { 1 });\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Load an identity from a hex secret, or from a file containing one.\n fn load_identity(arg: &str) -> Result<Identity> {\n     let path = Path::new(arg);\n     let secret = if path.is_file() {\n         std::fs::read_to_string(path)?.trim().to_string()\n     } else {\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "verify",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 160
+        },
+        "start": {
+          "column": 1,
+          "line": 144
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:145:5: replace verify -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 61,
+        "line": 159
+      },
+      "start": {
+        "column": 5,
+        "line": 145
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace load_identity -> Result<Identity> with Ok(Default::default())\n@@ -156,23 +156,17 @@\n         println!(\"  {mark} {}{}\", c.name, if c.detail.is_empty() { String::new() } else { format!(\"  ({})\", c.detail) });\n     }\n     println!(\"\\n{}\", if report.accepted { \"ACCEPTED\" } else { \"REJECTED\" });\n     std::process::exit(if report.accepted { 0 } else { 1 });\n }\n \n /// Load an identity from a hex secret, or from a file containing one.\n fn load_identity(arg: &str) -> Result<Identity> {\n-    let path = Path::new(arg);\n-    let secret = if path.is_file() {\n-        std::fs::read_to_string(path)?.trim().to_string()\n-    } else {\n-        arg.to_string()\n-    };\n-    Identity::from_secret_hex(&secret)\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {\n     Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)\n }\n \n fn emit<T: Serialize>(value: &T, out: Option<PathBuf>) -> Result<()> {\n     let json = serde_json::to_string_pretty(value)?;\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "load_identity",
+      "return_type": "-> Result<Identity>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 171
+        },
+        "start": {
+          "column": 1,
+          "line": 162
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:164:5: replace load_identity -> Result<Identity> with Ok(Default::default())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 170
+      },
+      "start": {
+        "column": 5,
+        "line": 164
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace read_json -> Result<T> with Ok(Default::default())\n@@ -166,17 +166,17 @@\n         std::fs::read_to_string(path)?.trim().to_string()\n     } else {\n         arg.to_string()\n     };\n     Identity::from_secret_hex(&secret)\n }\n \n fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {\n-    Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn emit<T: Serialize>(value: &T, out: Option<PathBuf>) -> Result<()> {\n     let json = serde_json::to_string_pretty(value)?;\n     match out {\n         Some(path) => {\n             std::fs::write(&path, json)?;\n             eprintln!(\"written to {}\", path.display());\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "read_json",
+      "return_type": "-> Result<T>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 175
+        },
+        "start": {
+          "column": 1,
+          "line": 173
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:174:5: replace read_json -> Result<T> with Ok(Default::default())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 63,
+        "line": 174
+      },
+      "start": {
+        "column": 5,
+        "line": 174
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-cli/src/main.rs\n+++ replace emit -> Result<()> with Ok(())\n@@ -170,18 +170,10 @@\n     Identity::from_secret_hex(&secret)\n }\n \n fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {\n     Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)\n }\n \n fn emit<T: Serialize>(value: &T, out: Option<PathBuf>) -> Result<()> {\n-    let json = serde_json::to_string_pretty(value)?;\n-    match out {\n-        Some(path) => {\n-            std::fs::write(&path, json)?;\n-            eprintln!(\"written to {}\", path.display());\n-        }\n-        None => println!(\"{json}\"),\n-    }\n-    Ok(())\n+    Ok(()) /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-cli/src/main.rs",
+    "function": {
+      "function_name": "emit",
+      "return_type": "-> Result<()>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 187
+        },
+        "start": {
+          "column": 1,
+          "line": 177
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-cli/src/main.rs:178:5: replace emit -> Result<()> with Ok(())",
+    "package": "aion-trust-cli",
+    "replacement": "Ok(())",
+    "span": {
+      "end": {
+        "column": 11,
+        "line": 186
+      },
+      "start": {
+        "column": 5,
+        "line": 178
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace to_hex -> String with String::new()\n@@ -4,22 +4,17 @@\n //! field and is seeded with a domain tag, so no two distinct messages can ever encode\n //! to the same byte string (no concatenation collisions, no cross-context replay).\n \n use crate::error::{Result, TrustError};\n \n const HEX: &[u8; 16] = b\"0123456789abcdef\";\n \n pub fn to_hex(bytes: &[u8]) -> String {\n-    let mut s = String::with_capacity(bytes.len() * 2);\n-    for b in bytes {\n-        s.push(HEX[(b >> 4) as usize] as char);\n-        s.push(HEX[(b & 0x0f) as usize] as char);\n-    }\n-    s\n+    String::new() /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "to_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "line": 11
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:12:5: replace to_hex -> String with String::new()",
+    "package": "aion-trust-core",
+    "replacement": "String::new()",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 17
+      },
+      "start": {
+        "column": 5,
+        "line": 12
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace to_hex -> String with \"xyzzy\".into()\n@@ -4,22 +4,17 @@\n //! field and is seeded with a domain tag, so no two distinct messages can ever encode\n //! to the same byte string (no concatenation collisions, no cross-context replay).\n \n use crate::error::{Result, TrustError};\n \n const HEX: &[u8; 16] = b\"0123456789abcdef\";\n \n pub fn to_hex(bytes: &[u8]) -> String {\n-    let mut s = String::with_capacity(bytes.len() * 2);\n-    for b in bytes {\n-        s.push(HEX[(b >> 4) as usize] as char);\n-        s.push(HEX[(b & 0x0f) as usize] as char);\n-    }\n-    s\n+    \"xyzzy\".into() /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "to_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "line": 11
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:12:5: replace to_hex -> String with \"xyzzy\".into()",
+    "package": "aion-trust-core",
+    "replacement": "\"xyzzy\".into()",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 17
+      },
+      "start": {
+        "column": 5,
+        "line": 12
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace >> with << in to_hex\n@@ -6,17 +6,17 @@\n \n use crate::error::{Result, TrustError};\n \n const HEX: &[u8; 16] = b\"0123456789abcdef\";\n \n pub fn to_hex(bytes: &[u8]) -> String {\n     let mut s = String::with_capacity(bytes.len() * 2);\n     for b in bytes {\n-        s.push(HEX[(b >> 4) as usize] as char);\n+        s.push(HEX[(b << /* ~ changed by cargo-mutants ~ */ 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "to_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "line": 11
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:14:23: replace >> with << in to_hex",
+    "package": "aion-trust-core",
+    "replacement": "<<",
+    "span": {
+      "end": {
+        "column": 25,
+        "line": 14
+      },
+      "start": {
+        "column": 23,
+        "line": 14
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace & with | in to_hex\n@@ -7,17 +7,17 @@\n use crate::error::{Result, TrustError};\n \n const HEX: &[u8; 16] = b\"0123456789abcdef\";\n \n pub fn to_hex(bytes: &[u8]) -> String {\n     let mut s = String::with_capacity(bytes.len() * 2);\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n-        s.push(HEX[(b & 0x0f) as usize] as char);\n+        s.push(HEX[(b | /* ~ changed by cargo-mutants ~ */ 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "to_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "line": 11
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:15:23: replace & with | in to_hex",
+    "package": "aion-trust-core",
+    "replacement": "|",
+    "span": {
+      "end": {
+        "column": 24,
+        "line": 15
+      },
+      "start": {
+        "column": 23,
+        "line": 15
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace & with ^ in to_hex\n@@ -7,17 +7,17 @@\n use crate::error::{Result, TrustError};\n \n const HEX: &[u8; 16] = b\"0123456789abcdef\";\n \n pub fn to_hex(bytes: &[u8]) -> String {\n     let mut s = String::with_capacity(bytes.len() * 2);\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n-        s.push(HEX[(b & 0x0f) as usize] as char);\n+        s.push(HEX[(b ^ /* ~ changed by cargo-mutants ~ */ 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "to_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 18
+        },
+        "start": {
+          "column": 1,
+          "line": 11
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:15:23: replace & with ^ in to_hex",
+    "package": "aion-trust-core",
+    "replacement": "^",
+    "span": {
+      "end": {
+        "column": 24,
+        "line": 15
+      },
+      "start": {
+        "column": 23,
+        "line": 15
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace from_hex -> Result<Vec<u8>> with Ok(vec![])\n@@ -13,33 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n-        return Err(TrustError::Decode(\"hex length must be even\".into()));\n-    }\n-    let nib = |c: u8| -> Result<u8> {\n-        match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n-            _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n-        }\n-    };\n-    let bytes = s.as_bytes();\n-    let mut out = Vec::with_capacity(bytes.len() / 2);\n-    for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n-    }\n-    Ok(out)\n+    Ok(vec![]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n         .map_err(|_| TrustError::Decode(format!(\"expected {N} bytes\")))\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:5: replace from_hex -> Result<Vec<u8>> with Ok(vec![])",
+    "package": "aion-trust-core",
+    "replacement": "Ok(vec![])",
+    "span": {
+      "end": {
+        "column": 12,
+        "line": 37
+      },
+      "start": {
+        "column": 5,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace from_hex -> Result<Vec<u8>> with Ok(vec![0])\n@@ -13,33 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n-        return Err(TrustError::Decode(\"hex length must be even\".into()));\n-    }\n-    let nib = |c: u8| -> Result<u8> {\n-        match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n-            _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n-        }\n-    };\n-    let bytes = s.as_bytes();\n-    let mut out = Vec::with_capacity(bytes.len() / 2);\n-    for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n-    }\n-    Ok(out)\n+    Ok(vec![0]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n         .map_err(|_| TrustError::Decode(format!(\"expected {N} bytes\")))\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:5: replace from_hex -> Result<Vec<u8>> with Ok(vec![0])",
+    "package": "aion-trust-core",
+    "replacement": "Ok(vec![0])",
+    "span": {
+      "end": {
+        "column": 12,
+        "line": 37
+      },
+      "start": {
+        "column": 5,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace from_hex -> Result<Vec<u8>> with Ok(vec![1])\n@@ -13,33 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n-        return Err(TrustError::Decode(\"hex length must be even\".into()));\n-    }\n-    let nib = |c: u8| -> Result<u8> {\n-        match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n-            _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n-        }\n-    };\n-    let bytes = s.as_bytes();\n-    let mut out = Vec::with_capacity(bytes.len() / 2);\n-    for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n-    }\n-    Ok(out)\n+    Ok(vec![1]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n         .map_err(|_| TrustError::Decode(format!(\"expected {N} bytes\")))\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:5: replace from_hex -> Result<Vec<u8>> with Ok(vec![1])",
+    "package": "aion-trust-core",
+    "replacement": "Ok(vec![1])",
+    "span": {
+      "end": {
+        "column": 12,
+        "line": 37
+      },
+      "start": {
+        "column": 5,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace != with == in from_hex\n@@ -13,17 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n+    if s.len() % 2 == /* ~ changed by cargo-mutants ~ */ 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:20: replace != with == in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "==",
+    "span": {
+      "end": {
+        "column": 22,
+        "line": 21
+      },
+      "start": {
+        "column": 20,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace % with / in from_hex\n@@ -13,17 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n+    if s.len() / /* ~ changed by cargo-mutants ~ */ 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:16: replace % with / in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 17,
+        "line": 21
+      },
+      "start": {
+        "column": 16,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace % with + in from_hex\n@@ -13,17 +13,17 @@\n     for b in bytes {\n         s.push(HEX[(b >> 4) as usize] as char);\n         s.push(HEX[(b & 0x0f) as usize] as char);\n     }\n     s\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n-    if s.len() % 2 != 0 {\n+    if s.len() + /* ~ changed by cargo-mutants ~ */ 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:21:16: replace % with + in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 17,
+        "line": 21
+      },
+      "start": {
+        "column": 16,
+        "line": 21
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ delete match arm b'0'..= b'9' in from_hex\n@@ -18,17 +18,17 @@\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n+             /* ~ changed by cargo-mutants ~ */\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "crates/aion-trust-core/src/encoding.rs:26:13: delete match arm b'0'..= b'9' in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 26
+      },
+      "start": {
+        "column": 13,
+        "line": 26
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ delete match arm b'a'..= b'f' in from_hex\n@@ -19,17 +19,17 @@\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n+             /* ~ changed by cargo-mutants ~ */\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "crates/aion-trust-core/src/encoding.rs:27:13: delete match arm b'a'..= b'f' in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 46,
+        "line": 27
+      },
+      "start": {
+        "column": 13,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ delete match arm b'A'..= b'F' in from_hex\n@@ -20,17 +20,17 @@\n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n+             /* ~ changed by cargo-mutants ~ */\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "crates/aion-trust-core/src/encoding.rs:28:13: delete match arm b'A'..= b'F' in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 46,
+        "line": 28
+      },
+      "start": {
+        "column": 13,
+        "line": 28
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with + in from_hex\n@@ -18,17 +18,17 @@\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n+            b'0'..=b'9' => Ok(c + /* ~ changed by cargo-mutants ~ */ b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:26:33: replace - with + in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 26
+      },
+      "start": {
+        "column": 33,
+        "line": 26
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with / in from_hex\n@@ -18,17 +18,17 @@\n }\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n-            b'0'..=b'9' => Ok(c - b'0'),\n+            b'0'..=b'9' => Ok(c / /* ~ changed by cargo-mutants ~ */ b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:26:33: replace - with / in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 26
+      },
+      "start": {
+        "column": 33,
+        "line": 26
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace + with - in from_hex\n@@ -19,17 +19,17 @@\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n+            b'a'..=b'f' => Ok(c - b'a' - /* ~ changed by cargo-mutants ~ */ 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:27:40: replace + with - in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "-",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 27
+      },
+      "start": {
+        "column": 40,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace + with * in from_hex\n@@ -19,17 +19,17 @@\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n+            b'a'..=b'f' => Ok(c - b'a' * /* ~ changed by cargo-mutants ~ */ 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:27:40: replace + with * in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "*",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 27
+      },
+      "start": {
+        "column": 40,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with + in from_hex\n@@ -19,17 +19,17 @@\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n+            b'a'..=b'f' => Ok(c + /* ~ changed by cargo-mutants ~ */ b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:27:33: replace - with + in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 27
+      },
+      "start": {
+        "column": 33,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with / in from_hex\n@@ -19,17 +19,17 @@\n \n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n-            b'a'..=b'f' => Ok(c - b'a' + 10),\n+            b'a'..=b'f' => Ok(c / /* ~ changed by cargo-mutants ~ */ b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:27:33: replace - with / in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 27
+      },
+      "start": {
+        "column": 33,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace + with - in from_hex\n@@ -20,17 +20,17 @@\n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n+            b'A'..=b'F' => Ok(c - b'A' - /* ~ changed by cargo-mutants ~ */ 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:28:40: replace + with - in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "-",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 28
+      },
+      "start": {
+        "column": 40,
+        "line": 28
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace + with * in from_hex\n@@ -20,17 +20,17 @@\n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n+            b'A'..=b'F' => Ok(c - b'A' * /* ~ changed by cargo-mutants ~ */ 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:28:40: replace + with * in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "*",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 28
+      },
+      "start": {
+        "column": 40,
+        "line": 28
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with + in from_hex\n@@ -20,17 +20,17 @@\n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n+            b'A'..=b'F' => Ok(c + /* ~ changed by cargo-mutants ~ */ b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:28:33: replace - with + in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 28
+      },
+      "start": {
+        "column": 33,
+        "line": 28
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace - with / in from_hex\n@@ -20,17 +20,17 @@\n pub fn from_hex(s: &str) -> Result<Vec<u8>> {\n     if s.len() % 2 != 0 {\n         return Err(TrustError::Decode(\"hex length must be even\".into()));\n     }\n     let nib = |c: u8| -> Result<u8> {\n         match c {\n             b'0'..=b'9' => Ok(c - b'0'),\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n-            b'A'..=b'F' => Ok(c - b'A' + 10),\n+            b'A'..=b'F' => Ok(c / /* ~ changed by cargo-mutants ~ */ b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:28:33: replace - with / in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 28
+      },
+      "start": {
+        "column": 33,
+        "line": 28
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace | with & in from_hex\n@@ -27,17 +27,17 @@\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n+        out.push((nib(pair[0])? << 4) & /* ~ changed by cargo-mutants ~ */ nib(pair[1])?);\n     }\n     Ok(out)\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:35:39: replace | with & in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "&",
+    "span": {
+      "end": {
+        "column": 40,
+        "line": 35
+      },
+      "start": {
+        "column": 39,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace | with ^ in from_hex\n@@ -27,17 +27,17 @@\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n+        out.push((nib(pair[0])? << 4) ^ /* ~ changed by cargo-mutants ~ */ nib(pair[1])?);\n     }\n     Ok(out)\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:35:39: replace | with ^ in from_hex",
+    "package": "aion-trust-core",
+    "replacement": "^",
+    "span": {
+      "end": {
+        "column": 40,
+        "line": 35
+      },
+      "start": {
+        "column": 39,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace << with >> in from_hex\n@@ -27,17 +27,17 @@\n             b'a'..=b'f' => Ok(c - b'a' + 10),\n             b'A'..=b'F' => Ok(c - b'A' + 10),\n             _ => Err(TrustError::Decode(\"invalid hex character\".into())),\n         }\n     };\n     let bytes = s.as_bytes();\n     let mut out = Vec::with_capacity(bytes.len() / 2);\n     for pair in bytes.chunks_exact(2) {\n-        out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n+        out.push((nib(pair[0])? >> /* ~ changed by cargo-mutants ~ */ 4) | nib(pair[1])?);\n     }\n     Ok(out)\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n     let v = from_hex(s)?;\n     v.try_into()\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "from_hex",
+      "return_type": "-> Result<Vec<u8>>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 38
+        },
+        "start": {
+          "column": 1,
+          "line": 20
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "crates/aion-trust-core/src/encoding.rs:35:33: replace << with >> in from_hex",
+    "package": "aion-trust-core",
+    "replacement": ">>",
+    "span": {
+      "end": {
+        "column": 35,
+        "line": 35
+      },
+      "start": {
+        "column": 33,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace decode_array -> Result<[u8; N]> with Ok([0; N])\n@@ -34,19 +34,17 @@\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n     Ok(out)\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n-    let v = from_hex(s)?;\n-    v.try_into()\n-        .map_err(|_| TrustError::Decode(format!(\"expected {N} bytes\")))\n+    Ok([0; N]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Builds unambiguous, domain-separated bytes for signing.\n pub struct SigningWriter {\n     buf: Vec<u8>,\n }\n \n impl SigningWriter {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "decode_array",
+      "return_type": "-> Result<[u8; N]>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 45
+        },
+        "start": {
+          "column": 1,
+          "line": 40
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:42:5: replace decode_array -> Result<[u8; N]> with Ok([0; N])",
+    "package": "aion-trust-core",
+    "replacement": "Ok([0; N])",
+    "span": {
+      "end": {
+        "column": 72,
+        "line": 44
+      },
+      "start": {
+        "column": 5,
+        "line": 42
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace decode_array -> Result<[u8; N]> with Ok([1; N])\n@@ -34,19 +34,17 @@\n     for pair in bytes.chunks_exact(2) {\n         out.push((nib(pair[0])? << 4) | nib(pair[1])?);\n     }\n     Ok(out)\n }\n \n /// Decode a hex string into a fixed-size array, erroring on the wrong length.\n pub fn decode_array<const N: usize>(s: &str) -> Result<[u8; N]> {\n-    let v = from_hex(s)?;\n-    v.try_into()\n-        .map_err(|_| TrustError::Decode(format!(\"expected {N} bytes\")))\n+    Ok([1; N]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Builds unambiguous, domain-separated bytes for signing.\n pub struct SigningWriter {\n     buf: Vec<u8>,\n }\n \n impl SigningWriter {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "decode_array",
+      "return_type": "-> Result<[u8; N]>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 45
+        },
+        "start": {
+          "column": 1,
+          "line": 40
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:42:5: replace decode_array -> Result<[u8; N]> with Ok([1; N])",
+    "package": "aion-trust-core",
+    "replacement": "Ok([1; N])",
+    "span": {
+      "end": {
+        "column": 72,
+        "line": 44
+      },
+      "start": {
+        "column": 5,
+        "line": 42
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace SigningWriter::field -> &mut Self with Box::leak(Box::new(Default::default()))\n@@ -54,20 +54,17 @@\n     pub fn new(domain: &[u8]) -> Self {\n         let mut w = Self { buf: Vec::new() };\n         w.field(domain);\n         w\n     }\n \n     /// Append a length-prefixed field (4-byte big-endian length, then the bytes).\n     pub fn field(&mut self, bytes: &[u8]) -> &mut Self {\n-        self.buf\n-            .extend_from_slice(&(bytes.len() as u32).to_be_bytes());\n-        self.buf.extend_from_slice(bytes);\n-        self\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Append a signed 64-bit integer as a fixed 8-byte field.\n     pub fn int(&mut self, v: i64) -> &mut Self {\n         self.field(&v.to_be_bytes())\n     }\n \n     pub fn into_bytes(self) -> Vec<u8> {\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "SigningWriter::field",
+      "return_type": "-> &mut Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 66
+        },
+        "start": {
+          "column": 5,
+          "line": 60
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:62:9: replace SigningWriter::field -> &mut Self with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-core",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 13,
+        "line": 65
+      },
+      "start": {
+        "column": 9,
+        "line": 62
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace SigningWriter::int -> &mut Self with Box::leak(Box::new(Default::default()))\n@@ -62,15 +62,15 @@\n         self.buf\n             .extend_from_slice(&(bytes.len() as u32).to_be_bytes());\n         self.buf.extend_from_slice(bytes);\n         self\n     }\n \n     /// Append a signed 64-bit integer as a fixed 8-byte field.\n     pub fn int(&mut self, v: i64) -> &mut Self {\n-        self.field(&v.to_be_bytes())\n+        Box::leak(Box::new(Default::default())) /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn into_bytes(self) -> Vec<u8> {\n         self.buf\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "SigningWriter::int",
+      "return_type": "-> &mut Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 71
+        },
+        "start": {
+          "column": 5,
+          "line": 68
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:70:9: replace SigningWriter::int -> &mut Self with Box::leak(Box::new(Default::default()))",
+    "package": "aion-trust-core",
+    "replacement": "Box::leak(Box::new(Default::default()))",
+    "span": {
+      "end": {
+        "column": 37,
+        "line": 70
+      },
+      "start": {
+        "column": 9,
+        "line": 70
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace SigningWriter::into_bytes -> Vec<u8> with vec![]\n@@ -66,11 +66,11 @@\n     }\n \n     /// Append a signed 64-bit integer as a fixed 8-byte field.\n     pub fn int(&mut self, v: i64) -> &mut Self {\n         self.field(&v.to_be_bytes())\n     }\n \n     pub fn into_bytes(self) -> Vec<u8> {\n-        self.buf\n+        vec![] /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "SigningWriter::into_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 75
+        },
+        "start": {
+          "column": 5,
+          "line": 73
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:74:9: replace SigningWriter::into_bytes -> Vec<u8> with vec![]",
+    "package": "aion-trust-core",
+    "replacement": "vec![]",
+    "span": {
+      "end": {
+        "column": 17,
+        "line": 74
+      },
+      "start": {
+        "column": 9,
+        "line": 74
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace SigningWriter::into_bytes -> Vec<u8> with vec![0]\n@@ -66,11 +66,11 @@\n     }\n \n     /// Append a signed 64-bit integer as a fixed 8-byte field.\n     pub fn int(&mut self, v: i64) -> &mut Self {\n         self.field(&v.to_be_bytes())\n     }\n \n     pub fn into_bytes(self) -> Vec<u8> {\n-        self.buf\n+        vec![0] /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "SigningWriter::into_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 75
+        },
+        "start": {
+          "column": 5,
+          "line": 73
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:74:9: replace SigningWriter::into_bytes -> Vec<u8> with vec![0]",
+    "package": "aion-trust-core",
+    "replacement": "vec![0]",
+    "span": {
+      "end": {
+        "column": 17,
+        "line": 74
+      },
+      "start": {
+        "column": 9,
+        "line": 74
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/encoding.rs\n+++ replace SigningWriter::into_bytes -> Vec<u8> with vec![1]\n@@ -66,11 +66,11 @@\n     }\n \n     /// Append a signed 64-bit integer as a fixed 8-byte field.\n     pub fn int(&mut self, v: i64) -> &mut Self {\n         self.field(&v.to_be_bytes())\n     }\n \n     pub fn into_bytes(self) -> Vec<u8> {\n-        self.buf\n+        vec![1] /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/encoding.rs",
+    "function": {
+      "function_name": "SigningWriter::into_bytes",
+      "return_type": "-> Vec<u8>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 75
+        },
+        "start": {
+          "column": 5,
+          "line": 73
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/encoding.rs:74:9: replace SigningWriter::into_bytes -> Vec<u8> with vec![1]",
+    "package": "aion-trust-core",
+    "replacement": "vec![1]",
+    "span": {
+      "end": {
+        "column": 17,
+        "line": 74
+      },
+      "start": {
+        "column": 9,
+        "line": 74
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::from_key -> Self with Default::default()\n@@ -12,18 +12,17 @@\n #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]\n #[serde(transparent)]\n pub struct Did(String);\n \n impl Did {\n     /// Derive the did from a verifying key: `did:aion:` + the first 16 bytes of\n     /// `hash(public_key)`. Stable, collision-resistant, and reveals nothing personal.\n     pub fn from_key(vk: &VerifyingKey) -> Self {\n-        let h = crypto::hash(&vk.to_bytes());\n-        Did(format!(\"did:aion:{}\", to_hex(&h[..16])))\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding\n     /// to an actual key is still enforced at verification, so this cannot fabricate trust.\n     pub fn from_string(s: String) -> Self {\n         Did(s)\n     }\n \n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::from_key",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 22
+        },
+        "start": {
+          "column": 5,
+          "line": 17
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:20:9: replace Did::from_key -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 54,
+        "line": 21
+      },
+      "start": {
+        "column": 9,
+        "line": 20
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::from_string -> Self with Default::default()\n@@ -19,17 +19,17 @@\n     pub fn from_key(vk: &VerifyingKey) -> Self {\n         let h = crypto::hash(&vk.to_bytes());\n         Did(format!(\"did:aion:{}\", to_hex(&h[..16])))\n     }\n \n     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding\n     /// to an actual key is still enforced at verification, so this cannot fabricate trust.\n     pub fn from_string(s: String) -> Self {\n-        Did(s)\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn as_str(&self) -> &str {\n         &self.0\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n         self.0.as_bytes()\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::from_string",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 28
+        },
+        "start": {
+          "column": 5,
+          "line": 24
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:27:9: replace Did::from_string -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 15,
+        "line": 27
+      },
+      "start": {
+        "column": 9,
+        "line": 27
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::as_str -> &str with \"\"\n@@ -23,17 +23,17 @@\n \n     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding\n     /// to an actual key is still enforced at verification, so this cannot fabricate trust.\n     pub fn from_string(s: String) -> Self {\n         Did(s)\n     }\n \n     pub fn as_str(&self) -> &str {\n-        &self.0\n+        \"\" /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n         self.0.as_bytes()\n     }\n }\n \n impl std::fmt::Display for Did {\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::as_str",
+      "return_type": "-> &str",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 32
+        },
+        "start": {
+          "column": 5,
+          "line": 30
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:31:9: replace Did::as_str -> &str with \"\"",
+    "package": "aion-trust-core",
+    "replacement": "\"\"",
+    "span": {
+      "end": {
+        "column": 16,
+        "line": 31
+      },
+      "start": {
+        "column": 9,
+        "line": 31
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::as_str -> &str with \"xyzzy\"\n@@ -23,17 +23,17 @@\n \n     /// Wrap a did string supplied by a user (e.g. an issuer naming the subject). The binding\n     /// to an actual key is still enforced at verification, so this cannot fabricate trust.\n     pub fn from_string(s: String) -> Self {\n         Did(s)\n     }\n \n     pub fn as_str(&self) -> &str {\n-        &self.0\n+        \"xyzzy\" /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n         self.0.as_bytes()\n     }\n }\n \n impl std::fmt::Display for Did {\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::as_str",
+      "return_type": "-> &str",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 32
+        },
+        "start": {
+          "column": 5,
+          "line": 30
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:31:9: replace Did::as_str -> &str with \"xyzzy\"",
+    "package": "aion-trust-core",
+    "replacement": "\"xyzzy\"",
+    "span": {
+      "end": {
+        "column": 16,
+        "line": 31
+      },
+      "start": {
+        "column": 9,
+        "line": 31
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::as_bytes -> &[u8] with Vec::leak(Vec::new())\n@@ -27,17 +27,17 @@\n         Did(s)\n     }\n \n     pub fn as_str(&self) -> &str {\n         &self.0\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n-        self.0.as_bytes()\n+        Vec::leak(Vec::new()) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n impl std::fmt::Display for Did {\n     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n         f.write_str(&self.0)\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::as_bytes",
+      "return_type": "-> &[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 36
+        },
+        "start": {
+          "column": 5,
+          "line": 34
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:35:9: replace Did::as_bytes -> &[u8] with Vec::leak(Vec::new())",
+    "package": "aion-trust-core",
+    "replacement": "Vec::leak(Vec::new())",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 35
+      },
+      "start": {
+        "column": 9,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::as_bytes -> &[u8] with Vec::leak(vec![0])\n@@ -27,17 +27,17 @@\n         Did(s)\n     }\n \n     pub fn as_str(&self) -> &str {\n         &self.0\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n-        self.0.as_bytes()\n+        Vec::leak(vec![0]) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n impl std::fmt::Display for Did {\n     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n         f.write_str(&self.0)\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::as_bytes",
+      "return_type": "-> &[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 36
+        },
+        "start": {
+          "column": 5,
+          "line": 34
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:35:9: replace Did::as_bytes -> &[u8] with Vec::leak(vec![0])",
+    "package": "aion-trust-core",
+    "replacement": "Vec::leak(vec![0])",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 35
+      },
+      "start": {
+        "column": 9,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace Did::as_bytes -> &[u8] with Vec::leak(vec![1])\n@@ -27,17 +27,17 @@\n         Did(s)\n     }\n \n     pub fn as_str(&self) -> &str {\n         &self.0\n     }\n \n     pub fn as_bytes(&self) -> &[u8] {\n-        self.0.as_bytes()\n+        Vec::leak(vec![1]) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n impl std::fmt::Display for Did {\n     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n         f.write_str(&self.0)\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "Did::as_bytes",
+      "return_type": "-> &[u8]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 36
+        },
+        "start": {
+          "column": 5,
+          "line": 34
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:35:9: replace Did::as_bytes -> &[u8] with Vec::leak(vec![1])",
+    "package": "aion-trust-core",
+    "replacement": "Vec::leak(vec![1])",
+    "span": {
+      "end": {
+        "column": 26,
+        "line": 35
+      },
+      "start": {
+        "column": 9,
+        "line": 35
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace <impl std::fmt::Display for Did>::fmt -> std::fmt::Result with Ok(Default::default())\n@@ -33,17 +33,17 @@\n \n     pub fn as_bytes(&self) -> &[u8] {\n         self.0.as_bytes()\n     }\n }\n \n impl std::fmt::Display for Did {\n     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n-        f.write_str(&self.0)\n+        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// The opaque content id of a claim: hex of `hash(signing_bytes)`. The only handle the\n /// ledger keys claim status on; carries no PII.\n #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]\n #[serde(transparent)]\n pub struct ClaimId(String);\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "<impl std::fmt::Display for Did>::fmt",
+      "return_type": "-> std::fmt::Result",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 42
+        },
+        "start": {
+          "column": 5,
+          "line": 40
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:41:9: replace <impl std::fmt::Display for Did>::fmt -> std::fmt::Result with Ok(Default::default())",
+    "package": "aion-trust-core",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 29,
+        "line": 41
+      },
+      "start": {
+        "column": 9,
+        "line": 41
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace ClaimId::from_signing_bytes -> Self with Default::default()\n@@ -45,15 +45,15 @@\n /// The opaque content id of a claim: hex of `hash(signing_bytes)`. The only handle the\n /// ledger keys claim status on; carries no PII.\n #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]\n #[serde(transparent)]\n pub struct ClaimId(String);\n \n impl ClaimId {\n     pub fn from_signing_bytes(bytes: &[u8]) -> Self {\n-        ClaimId(to_hex(&crypto::hash(bytes)))\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn as_str(&self) -> &str {\n         &self.0\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "ClaimId::from_signing_bytes",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 54
+        },
+        "start": {
+          "column": 5,
+          "line": 52
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:53:9: replace ClaimId::from_signing_bytes -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 46,
+        "line": 53
+      },
+      "start": {
+        "column": 9,
+        "line": 53
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace ClaimId::as_str -> &str with \"\"\n@@ -49,11 +49,11 @@\n pub struct ClaimId(String);\n \n impl ClaimId {\n     pub fn from_signing_bytes(bytes: &[u8]) -> Self {\n         ClaimId(to_hex(&crypto::hash(bytes)))\n     }\n \n     pub fn as_str(&self) -> &str {\n-        &self.0\n+        \"\" /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "ClaimId::as_str",
+      "return_type": "-> &str",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 58
+        },
+        "start": {
+          "column": 5,
+          "line": 56
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:57:9: replace ClaimId::as_str -> &str with \"\"",
+    "package": "aion-trust-core",
+    "replacement": "\"\"",
+    "span": {
+      "end": {
+        "column": 16,
+        "line": 57
+      },
+      "start": {
+        "column": 9,
+        "line": 57
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/id.rs\n+++ replace ClaimId::as_str -> &str with \"xyzzy\"\n@@ -49,11 +49,11 @@\n pub struct ClaimId(String);\n \n impl ClaimId {\n     pub fn from_signing_bytes(bytes: &[u8]) -> Self {\n         ClaimId(to_hex(&crypto::hash(bytes)))\n     }\n \n     pub fn as_str(&self) -> &str {\n-        &self.0\n+        \"xyzzy\" /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/id.rs",
+    "function": {
+      "function_name": "ClaimId::as_str",
+      "return_type": "-> &str",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 58
+        },
+        "start": {
+          "column": 5,
+          "line": 56
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/id.rs:57:9: replace ClaimId::as_str -> &str with \"xyzzy\"",
+    "package": "aion-trust-core",
+    "replacement": "\"xyzzy\"",
+    "span": {
+      "end": {
+        "column": 16,
+        "line": 57
+      },
+      "start": {
+        "column": 9,
+        "line": 57
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::generate -> Self with Default::default()\n@@ -9,19 +9,17 @@\n \n pub struct Identity {\n     signing_key: SigningKey,\n }\n \n impl Identity {\n     /// Generate a fresh random identity.\n     pub fn generate() -> Self {\n-        Self {\n-            signing_key: SigningKey::generate(),\n-        }\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Restore an identity from its 32-byte secret, hex-encoded.\n     pub fn from_secret_hex(hex: &str) -> Result<Self> {\n         let bytes = decode_array::<32>(hex)?;\n         Ok(Self {\n             signing_key: SigningKey::from_bytes(&bytes)?,\n         })\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::generate",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 20
+        },
+        "start": {
+          "column": 5,
+          "line": 15
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:17:9: replace Identity::generate -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 19
+      },
+      "start": {
+        "column": 9,
+        "line": 17
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::from_secret_hex -> Result<Self> with Ok(Default::default())\n@@ -16,20 +16,17 @@\n     pub fn generate() -> Self {\n         Self {\n             signing_key: SigningKey::generate(),\n         }\n     }\n \n     /// Restore an identity from its 32-byte secret, hex-encoded.\n     pub fn from_secret_hex(hex: &str) -> Result<Self> {\n-        let bytes = decode_array::<32>(hex)?;\n-        Ok(Self {\n-            signing_key: SigningKey::from_bytes(&bytes)?,\n-        })\n+        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// The 32-byte secret, hex-encoded. Treat as a secret: never log or commit it.\n     pub fn secret_hex(&self) -> String {\n         to_hex(self.signing_key.to_bytes())\n     }\n \n     pub fn verifying_key(&self) -> VerifyingKey {\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::from_secret_hex",
+      "return_type": "-> Result<Self>",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 28
+        },
+        "start": {
+          "column": 5,
+          "line": 22
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:24:9: replace Identity::from_secret_hex -> Result<Self> with Ok(Default::default())",
+    "package": "aion-trust-core",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 11,
+        "line": 27
+      },
+      "start": {
+        "column": 9,
+        "line": 24
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::secret_hex -> String with String::new()\n@@ -24,17 +24,17 @@\n         let bytes = decode_array::<32>(hex)?;\n         Ok(Self {\n             signing_key: SigningKey::from_bytes(&bytes)?,\n         })\n     }\n \n     /// The 32-byte secret, hex-encoded. Treat as a secret: never log or commit it.\n     pub fn secret_hex(&self) -> String {\n-        to_hex(self.signing_key.to_bytes())\n+        String::new() /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn verifying_key(&self) -> VerifyingKey {\n         self.signing_key.verifying_key()\n     }\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::secret_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 33
+        },
+        "start": {
+          "column": 5,
+          "line": 30
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:32:9: replace Identity::secret_hex -> String with String::new()",
+    "package": "aion-trust-core",
+    "replacement": "String::new()",
+    "span": {
+      "end": {
+        "column": 44,
+        "line": 32
+      },
+      "start": {
+        "column": 9,
+        "line": 32
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::secret_hex -> String with \"xyzzy\".into()\n@@ -24,17 +24,17 @@\n         let bytes = decode_array::<32>(hex)?;\n         Ok(Self {\n             signing_key: SigningKey::from_bytes(&bytes)?,\n         })\n     }\n \n     /// The 32-byte secret, hex-encoded. Treat as a secret: never log or commit it.\n     pub fn secret_hex(&self) -> String {\n-        to_hex(self.signing_key.to_bytes())\n+        \"xyzzy\".into() /* ~ changed by cargo-mutants ~ */\n     }\n \n     pub fn verifying_key(&self) -> VerifyingKey {\n         self.signing_key.verifying_key()\n     }\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::secret_hex",
+      "return_type": "-> String",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 33
+        },
+        "start": {
+          "column": 5,
+          "line": 30
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:32:9: replace Identity::secret_hex -> String with \"xyzzy\".into()",
+    "package": "aion-trust-core",
+    "replacement": "\"xyzzy\".into()",
+    "span": {
+      "end": {
+        "column": 44,
+        "line": 32
+      },
+      "start": {
+        "column": 9,
+        "line": 32
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::verifying_key -> VerifyingKey with Default::default()\n@@ -28,17 +28,17 @@\n     }\n \n     /// The 32-byte secret, hex-encoded. Treat as a secret: never log or commit it.\n     pub fn secret_hex(&self) -> String {\n         to_hex(self.signing_key.to_bytes())\n     }\n \n     pub fn verifying_key(&self) -> VerifyingKey {\n-        self.signing_key.verifying_key()\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n         Did::from_key(&self.verifying_key())\n     }\n \n     /// Sign a message, producing a 64-byte Ed25519 signature.\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::verifying_key",
+      "return_type": "-> VerifyingKey",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 37
+        },
+        "start": {
+          "column": 5,
+          "line": 35
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:36:9: replace Identity::verifying_key -> VerifyingKey with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 36
+      },
+      "start": {
+        "column": 9,
+        "line": 36
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::did -> Did with Default::default()\n@@ -33,17 +33,17 @@\n     }\n \n     pub fn verifying_key(&self) -> VerifyingKey {\n         self.signing_key.verifying_key()\n     }\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n-        Did::from_key(&self.verifying_key())\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Sign a message, producing a 64-byte Ed25519 signature.\n     pub fn sign(&self, message: &[u8]) -> [u8; 64] {\n         self.signing_key.sign(message)\n     }\n }\n \n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::did",
+      "return_type": "-> Did",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 42
+        },
+        "start": {
+          "column": 5,
+          "line": 39
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:41:9: replace Identity::did -> Did with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 45,
+        "line": 41
+      },
+      "start": {
+        "column": 9,
+        "line": 41
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::sign -> [u8; 64] with [0; 64]\n@@ -38,17 +38,17 @@\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n         Did::from_key(&self.verifying_key())\n     }\n \n     /// Sign a message, producing a 64-byte Ed25519 signature.\n     pub fn sign(&self, message: &[u8]) -> [u8; 64] {\n-        self.signing_key.sign(message)\n+        [0; 64] /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// Decode a verifying key from its 32-byte hex encoding.\n pub fn verifying_key_from_hex(hex: &str) -> Result<VerifyingKey> {\n     let bytes = decode_array::<32>(hex)?;\n     Ok(VerifyingKey::from_bytes(&bytes)?)\n }\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::sign",
+      "return_type": "-> [u8; 64]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 47
+        },
+        "start": {
+          "column": 5,
+          "line": 44
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:46:9: replace Identity::sign -> [u8; 64] with [0; 64]",
+    "package": "aion-trust-core",
+    "replacement": "[0; 64]",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 46
+      },
+      "start": {
+        "column": 9,
+        "line": 46
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace Identity::sign -> [u8; 64] with [1; 64]\n@@ -38,17 +38,17 @@\n \n     /// This identity's public did.\n     pub fn did(&self) -> Did {\n         Did::from_key(&self.verifying_key())\n     }\n \n     /// Sign a message, producing a 64-byte Ed25519 signature.\n     pub fn sign(&self, message: &[u8]) -> [u8; 64] {\n-        self.signing_key.sign(message)\n+        [1; 64] /* ~ changed by cargo-mutants ~ */\n     }\n }\n \n /// Decode a verifying key from its 32-byte hex encoding.\n pub fn verifying_key_from_hex(hex: &str) -> Result<VerifyingKey> {\n     let bytes = decode_array::<32>(hex)?;\n     Ok(VerifyingKey::from_bytes(&bytes)?)\n }\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "Identity::sign",
+      "return_type": "-> [u8; 64]",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 47
+        },
+        "start": {
+          "column": 5,
+          "line": 44
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:46:9: replace Identity::sign -> [u8; 64] with [1; 64]",
+    "package": "aion-trust-core",
+    "replacement": "[1; 64]",
+    "span": {
+      "end": {
+        "column": 39,
+        "line": 46
+      },
+      "start": {
+        "column": 9,
+        "line": 46
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/identity.rs\n+++ replace verifying_key_from_hex -> Result<VerifyingKey> with Ok(Default::default())\n@@ -44,11 +44,10 @@\n     /// Sign a message, producing a 64-byte Ed25519 signature.\n     pub fn sign(&self, message: &[u8]) -> [u8; 64] {\n         self.signing_key.sign(message)\n     }\n }\n \n /// Decode a verifying key from its 32-byte hex encoding.\n pub fn verifying_key_from_hex(hex: &str) -> Result<VerifyingKey> {\n-    let bytes = decode_array::<32>(hex)?;\n-    Ok(VerifyingKey::from_bytes(&bytes)?)\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
+    "file": "crates/aion-trust-core/src/identity.rs",
+    "function": {
+      "function_name": "verifying_key_from_hex",
+      "return_type": "-> Result<VerifyingKey>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 54
+        },
+        "start": {
+          "column": 1,
+          "line": 50
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/identity.rs:52:5: replace verifying_key_from_hex -> Result<VerifyingKey> with Ok(Default::default())",
+    "package": "aion-trust-core",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 42,
+        "line": 53
+      },
+      "start": {
+        "column": 5,
+        "line": 52
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/time.rs\n+++ replace Timestamp::now -> Self with Default::default()\n@@ -5,20 +5,16 @@\n \n #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]\n #[serde(transparent)]\n pub struct Timestamp(pub i64);\n \n impl Timestamp {\n     /// The current wall-clock time in unix seconds (saturates to 0 before the epoch).\n     pub fn now() -> Self {\n-        let secs = std::time::SystemTime::now()\n-            .duration_since(std::time::UNIX_EPOCH)\n-            .map(|d| d.as_secs() as i64)\n-            .unwrap_or(0);\n-        Timestamp(secs)\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// This timestamp plus `seconds`.\n     pub fn plus_seconds(self, seconds: i64) -> Self {\n         Timestamp(self.0.saturating_add(seconds))\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/time.rs",
+    "function": {
+      "function_name": "Timestamp::now",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 18
+        },
+        "start": {
+          "column": 5,
+          "line": 11
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/time.rs:13:9: replace Timestamp::now -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 24,
+        "line": 17
+      },
+      "start": {
+        "column": 9,
+        "line": 13
+      }
+    }
+  },
+  {
+    "diff": "--- crates/aion-trust-core/src/time.rs\n+++ replace Timestamp::plus_seconds -> Self with Default::default()\n@@ -14,11 +14,11 @@\n             .duration_since(std::time::UNIX_EPOCH)\n             .map(|d| d.as_secs() as i64)\n             .unwrap_or(0);\n         Timestamp(secs)\n     }\n \n     /// This timestamp plus `seconds`.\n     pub fn plus_seconds(self, seconds: i64) -> Self {\n-        Timestamp(self.0.saturating_add(seconds))\n+        Default::default() /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "crates/aion-trust-core/src/time.rs",
+    "function": {
+      "function_name": "Timestamp::plus_seconds",
+      "return_type": "-> Self",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 23
+        },
+        "start": {
+          "column": 5,
+          "line": 20
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "crates/aion-trust-core/src/time.rs:22:9: replace Timestamp::plus_seconds -> Self with Default::default()",
+    "package": "aion-trust-core",
+    "replacement": "Default::default()",
+    "span": {
+      "end": {
+        "column": 50,
+        "line": 22
+      },
+      "start": {
+        "column": 9,
+        "line": 22
+      }
+    }
+  }
+]

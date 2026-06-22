@@ -1,0 +1,15 @@
+[package]
+name = "aion-trust-claims"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Claims, presentations, and offline verification for aion-trust."
+
+[dependencies]
+aion-trust-core.workspace = true
+aion-context.workspace = true
+serde.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,17 @@
+
+*** baseline
+
+*** /home/ops/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=aion-trust-claims@0.1.0 --package=aion-trust-cli@0.1.0 --package=aion-trust-core@0.1.0
+error: failed to load manifest for workspace member `/tmp/cargo-mutants-aion-trust-KRL4wg.tmp/crates/aion-trust-core`
+referenced by workspace at `/tmp/cargo-mutants-aion-trust-KRL4wg.tmp/Cargo.toml`
+
+Caused by:
+  failed to load manifest for dependency `aion-context`
+
+Caused by:
+  failed to read `/tmp/aion-context/Cargo.toml`
+
+Caused by:
+  No such file or directory (os error 2)
+
+*** result: Failure(101)

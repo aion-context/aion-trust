@@ -3,19 +3,29 @@
 
 [advisories]
 version = 2
-# Fail on known security advisories; allow explicit, reviewed exceptions only.
-ignore = []
+# Unmaintained advisories on aion-context's vetted, transitive post-quantum crypto stack
+# (PQClean being archived) and a transitive `paste`. Not vulnerabilities; upstream's call,
+# not ours. Re-review when aion-context updates its crypto deps.
+ignore = [
+    "RUSTSEC-2024-0436", # paste — unmaintained (transitive)
+    "RUSTSEC-2026-0162", # pqcrypto (transitive, aion-context)
+    "RUSTSEC-2026-0163", # pqcrypto-internals — unmaintained (transitive)
+    "RUSTSEC-2026-0166", # pqcrypto-mldsa — unmaintained (transitive)
+]
 
 [licenses]
 version = 2
-# Permissive licenses only, matching the project's Apache-2.0 stance.
-allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-3.0", "Zlib"]
+# Permissive + weak-copyleft (MPL/Unicode appear transitively); matches Apache-2.0 project.
+allow = [
+    "Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC",
+    "Unicode-3.0", "Unicode-DFS-2016", "Zlib", "MPL-2.0",
+]
 confidence-threshold = 0.9
 
 [bans]
 multiple-versions = "warn"
-wildcards = "deny"            # pin real versions; no "*" deps
-# Cryptography comes from aion-context — flag stray crypto crates for review.
+wildcards = "deny"
+allow-wildcard-paths = true   # internal path deps carry no version; that's fine
 deny = []
 
 [sources]

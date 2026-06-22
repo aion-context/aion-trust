@@ -27,8 +27,9 @@ if [ -f Cargo.toml ]; then
     skip "cargo deny check" "cargo-deny not installed (cargo install cargo-deny)"
   fi
   if command -v cargo-mutants >/dev/null 2>&1; then
-    # 0-survivors bar; --in-diff keeps it to changed lines when a baseline exists
-    gate "cargo mutants (0 survivors)" cargo mutants --no-shuffle --colors never
+    # 0-survivors bar. --in-place because aion-context is a sibling path dep that does not
+    # survive cargo-mutants' default /tmp copy; mutants reverts each change as it goes.
+    gate "cargo mutants (0 survivors)" cargo mutants --in-place --no-shuffle --colors never
   else
     skip "cargo mutants" "cargo-mutants not installed (cargo install cargo-mutants)"
   fi
