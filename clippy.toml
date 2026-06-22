@@ -1,0 +1,4 @@
+# Tiger Style: functions stay small and single-purpose.
+too-many-lines-threshold = 60
+# Keep argument lists honest; split state into types instead.
+too-many-arguments-threshold = 7

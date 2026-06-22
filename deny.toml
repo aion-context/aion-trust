@@ -1,0 +1,24 @@
+# cargo-deny configuration — dependencies are a liability; keep the tree honest.
+# https://embarkstudios.github.io/cargo-deny/
+
+[advisories]
+version = 2
+# Fail on known security advisories; allow explicit, reviewed exceptions only.
+ignore = []
+
+[licenses]
+version = 2
+# Permissive licenses only, matching the project's Apache-2.0 stance.
+allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-3.0", "Zlib"]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"            # pin real versions; no "*" deps
+# Cryptography comes from aion-context — flag stray crypto crates for review.
+deny = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-git = []

@@ -1,0 +1,37 @@
+name: gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gate:
+    name: quality gates
+    runs-on: ubuntu-latest
+    steps:
+      # aion-trust depends on aion-context as a sibling (path = ../aion-context),
+      # so check both out side by side under the workspace.
+      - name: Checkout aion-trust
+        uses: actions/checkout@v4
+        with:
+          path: aion-trust
+      - name: Checkout aion-context (sibling)
+        uses: actions/checkout@v4
+        with:
+          repository: aion-context/aion-context
+          path: aion-context
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup component add rustfmt clippy
+
+      # Optional gate tooling — the gate runner skips gracefully if absent, but CI
+      # should enforce the full bar once code lands. Uncomment to enable:
+      # - run: cargo install cargo-deny cargo-mutants --locked
+
+      - name: Run quality gates
+        working-directory: aion-trust
+        run: bash scripts/gate.sh
