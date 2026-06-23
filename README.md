@@ -60,6 +60,9 @@ See [`docs/VISION.md`](docs/VISION.md) for the full case and where the savings l
 field-level selective disclosure (+ anti-replay and predicate proofs), the web surfaces, and W3C
 VC/VP + did:key interop are all implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
+▶ **[Watch the 3-minute demo](https://youtu.be/JDClPXRxIAg)** — a narrated tour of the issuer,
+candidate wallet, and employer verifier, the revoke→reject moment, and W3C interop.
+
 ### Run the web demo
 
 ```

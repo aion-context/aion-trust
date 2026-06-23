@@ -1,0 +1,102 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://aion.dev/trust/interop/v1"
+  ],
+  "credentialSchema": {
+    "id": "https://aion.dev/trust/schema/aion-trust/employment/v1",
+    "type": "AionTrustSchema2026"
+  },
+  "credentialSubject": {
+    "employer": "Acme Corp",
+    "employment_type": "full_time",
+    "end": null,
+    "id": "did:aion:1a4654832110dd1723b66eaf7e73bf6aa290b2b856246590",
+    "rehire_eligible": false,
+    "start": "2024-09-01",
+    "title": "Staff Engineer"
+  },
+  "id": "urn:aion-trust:claim:daa1e7322623fa94c8b501cbfd483b4f101c792bd74af5224f5bd38bd1645409",
+  "issuer": "did:aion:01479cf2beaeabbffa485cb7c9bf0ec3a2ce8ed05e04b5c7",
+  "proof": {
+    "aionSignature": "7727576332323e543faa98735268b80208b00ee83999d5717fecf38cdc108d903babc828ad9294f44bd08f91e7ab2fd21bede0a7759015bc558315e490409904",
+    "bodyRoot": "482221eed03c8ed46c2c65cc53a98bb6916694c6b7880680fd9d69405c4ec54a",
+    "category": "employment",
+    "disclosures": [
+      {
+        "audit_path": [
+          "a1aba8244826bbc00d108ccd9f5c19f86b6048a36b682e759076267b1084b3e0",
+          "deb8aff52410e390f6dd76ae2e501670a67eb1e25a7f1ee9d2b3b79f71caad1a",
+          "4e4b5680850ee81b4537b55ca64190879549c51e57f600c262904881eb4b7d6d"
+        ],
+        "index": 0,
+        "key": "employer",
+        "salt": "7726be7b30ecb1191dfe45d546eeac8728eb779b6e0b1ca0a3077a1740b4d1cc",
+        "value": "Acme Corp"
+      },
+      {
+        "audit_path": [
+          "8738275e4a25f1cbe9b23f4c2252b1dbe7504be731d75016704da4023d17bb48",
+          "deb8aff52410e390f6dd76ae2e501670a67eb1e25a7f1ee9d2b3b79f71caad1a",
+          "4e4b5680850ee81b4537b55ca64190879549c51e57f600c262904881eb4b7d6d"
+        ],
+        "index": 1,
+        "key": "employment_type",
+        "salt": "2b7c7447f200eb93e544e46be47eebd46829de98a630374adf4de1cb91b3984f",
+        "value": "full_time"
+      },
+      {
+        "audit_path": [
+          "a97657b723b284f4601ca718ac69f616f2bfed56febe673319ef89c814dcbd7c",
+          "1c817d706695844380cf3be2329fa3f5d118608145e21d8ecce62bd517e9500b",
+          "4e4b5680850ee81b4537b55ca64190879549c51e57f600c262904881eb4b7d6d"
+        ],
+        "index": 2,
+        "key": "end",
+        "salt": "9b0e18c680664f401716bf18e6ddac7f23209c3b5d4d08ae06e1e68c3b3315a2",
+        "value": null
+      },
+      {
+        "audit_path": [
+          "038953fcc13826dc1db7dbb049bc2b3a0076418decca17e1dbd29ee36b1b7320",
+          "1c817d706695844380cf3be2329fa3f5d118608145e21d8ecce62bd517e9500b",
+          "4e4b5680850ee81b4537b55ca64190879549c51e57f600c262904881eb4b7d6d"
+        ],
+        "index": 3,
+        "key": "rehire_eligible",
+        "salt": "93ac126d7859bd64b2da028e87fcc89dc83c8a3ae360393b6467099dfd3a6f34",
+        "value": false
+      },
+      {
+        "audit_path": [
+          "3c17bdd6b07ba4e53c574d5e2062d9ee3a89640a4e5df296231bbabc366daab4",
+          "aea4b6dd34ef8a30296282d1aad5c94abd33cd72b2dfeb5fd3e3c349bb294d66"
+        ],
+        "index": 4,
+        "key": "start",
+        "salt": "b10c0cfa55c30911537e84bbcf1bdb984b167d25af94373dfa149deec73d8d39",
+        "value": "2024-09-01"
+      },
+      {
+        "audit_path": [
+          "f859a30039bcebf09e746a57cbc0efa978a787bd7a61a52ddf1852a6df753bdb",
+          "aea4b6dd34ef8a30296282d1aad5c94abd33cd72b2dfeb5fd3e3c349bb294d66"
+        ],
+        "index": 5,
+        "key": "title",
+        "salt": "b3faf7c7c7970413b4bb13878325191cce4df511338dd6363c52bb1d605aa3c3",
+        "value": "Staff Engineer"
+      }
+    ],
+    "fieldCount": 6,
+    "proofPurpose": "assertionMethod",
+    "schemaId": "aion-trust/employment/v1",
+    "type": "AionTrustNativeProof2026",
+    "verificationMethod": "did:key:z6MkkJ9V73RxxXZ3r73CXpK76NCuEbGvtR282p462eUQMyKR#z6MkkJ9V73RxxXZ3r73CXpK76NCuEbGvtR282p462eUQMyKR"
+  },
+  "type": [
+    "VerifiableCredential",
+    "EmploymentCredential"
+  ],
+  "validFrom": "2026-06-22T22:08:01Z"
+}

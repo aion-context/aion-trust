@@ -1,0 +1,1 @@
+Now watch revocation. The issuer withdraws the claim on the registry. Nothing about the person changes — only the claim's standing. The candidate presents the very same credential again, and now it fails. Red. The check that flips is, claim not revoked. That is the difference between a P D F and a proof.

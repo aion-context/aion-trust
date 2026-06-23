@@ -1,0 +1,368 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aion-trust · Interop</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>/* aion-trust web surfaces — refined institutional, light.
+   Warm off-white canvas tinted toward the brand green (logo emerald #36d992 deepened to a pine
+   accent for a light ground); amber and oxblood-coral carry the revoked / rejected semantics.
+   Libre Caslon headlines · Hanken Grotesk body · Spline Sans Mono for identifiers. */
+
+:root {
+  color-scheme: light;
+
+  /* surfaces & ink — neutrals tinted toward the brand hue (~160) for cohesion */
+  --canvas: oklch(97.6% 0.008 152);
+  --surface: oklch(99.4% 0.004 150);
+  --surface-2: oklch(98% 0.007 152);
+  --ink: oklch(25% 0.03 162);
+  --ink-soft: oklch(43% 0.026 162);
+  --ink-faint: oklch(55% 0.02 160);
+  --line: oklch(88% 0.013 160);
+  --line-strong: oklch(80% 0.02 160);
+
+  /* accent: the brand green, deepened so it reads as authority on light, not neon */
+  --accent: oklch(48% 0.105 162);
+  --accent-deep: oklch(40% 0.10 162);
+  --accent-tint: oklch(95.5% 0.035 162);
+
+  /* semantics, drawn from the logo's three faces */
+  --ok: oklch(46% 0.11 160);
+  --ok-tint: oklch(95.5% 0.045 160);
+  --warn: oklch(55% 0.115 66);
+  --warn-tint: oklch(95% 0.06 80);
+  --bad: oklch(49% 0.165 30);
+  --bad-tint: oklch(95.5% 0.045 28);
+
+  --shadow-sm: 0 1px 2px oklch(25% 0.03 162 / 0.05);
+  --shadow: 0 1px 2px oklch(25% 0.03 162 / 0.04), 0 10px 30px oklch(25% 0.03 162 / 0.06);
+
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 16px;
+
+  --space-3xs: 4px;  --space-2xs: 8px;  --space-xs: 12px; --space-sm: 16px;
+  --space-md: 24px;  --space-lg: 32px;  --space-xl: 48px; --space-2xl: 64px; --space-3xl: 96px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-display: "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  --font-serif: "Libre Caslon Text", Georgia, serif;
+  --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  font-family: var(--font-body);
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  line-height: 1.55;
+  font-size: 1rem;
+  /* one faint wash of accent at the top-right — restraint, not a gradient feature */
+  background:
+    radial-gradient(120% 80% at 92% -10%, var(--accent-tint), transparent 60%),
+    var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--accent-deep); text-decoration: none; }
+a:hover { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.wrap {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md) var(--space-3xl);
+}
+
+/* ── header / nav ─────────────────────────────────────────────────────────── */
+header.top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md); flex-wrap: wrap;
+  max-width: 68rem; margin: 0 auto;
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: var(--space-2xs);
+  font-family: var(--font-display); font-size: 1.3rem; letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.brand img { width: 1.4rem; height: 1.4rem; border-radius: 5px; }
+.brand .dot { color: var(--accent); }
+nav.surfaces { display: flex; gap: var(--space-3xs); flex-wrap: wrap; }
+nav.surfaces a {
+  padding: var(--space-3xs) var(--space-xs); border-radius: var(--r-sm);
+  color: var(--ink-soft); font-size: 0.92rem; font-weight: 500;
+  transition: color 0.15s, background 0.15s;
+}
+nav.surfaces a:hover { color: var(--ink); background: var(--surface-2); }
+nav.surfaces a.active { color: var(--accent-deep); background: var(--accent-tint); font-weight: 600; }
+
+/* ── headings & text ──────────────────────────────────────────────────────── */
+.kicker {
+  text-transform: uppercase; letter-spacing: 0.22em; font-size: 0.72rem;
+  font-weight: 600; color: var(--accent); margin: 0 0 var(--space-xs);
+}
+h1 {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(2rem, 1.3rem + 3vw, 3rem); line-height: 1.08;
+  letter-spacing: -0.005em; margin: 0 0 var(--space-sm); color: var(--ink);
+  max-width: 20ch;
+}
+h2 {
+  font-family: var(--font-serif); font-weight: 700;
+  font-size: 1.35rem; line-height: 1.2; margin: 0 0 var(--space-xs); color: var(--ink);
+}
+h3 {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 1rem; letter-spacing: 0.005em; margin: 0 0 var(--space-2xs); color: var(--ink);
+}
+p { margin: 0 0 var(--space-sm); }
+p.lede { color: var(--ink-soft); max-width: 64ch; font-size: 1.06rem; }
+p.lede code, .panel p.lede code { white-space: nowrap; }
+strong { font-weight: 600; color: var(--ink); }
+
+/* ── panels & layout ──────────────────────────────────────────────────────── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--space-md);
+  margin: var(--space-md) 0;
+  box-shadow: var(--shadow-sm);
+}
+.panel > h2:first-child, .panel > h3:first-child { margin-top: 0; }
+.grid { display: grid; gap: var(--space-md); grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+
+/* ── home: hero + the three rooms ─────────────────────────────────────────── */
+.hero { padding: var(--space-lg) 0 var(--space-md); }
+.rooms { display: grid; gap: var(--space-sm); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+a.room {
+  display: grid; gap: var(--space-2xs); align-content: start;
+  padding: var(--space-md); border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s;
+}
+a.room:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--line-strong); }
+a.room .role {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em;
+  font-weight: 600; color: var(--accent);
+}
+a.room h2 { font-size: 1.2rem; margin: 0; }
+a.room p { color: var(--ink-soft); font-size: 0.95rem; margin: 0; }
+a.room .go { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); margin-top: var(--space-2xs); }
+a.room.feature { grid-column: 1 / -1; background: var(--accent-tint); border-color: transparent; }
+a.room.feature .role, a.room.feature h2 { color: var(--accent-deep); }
+
+/* ── forms ────────────────────────────────────────────────────────────────── */
+form.stack { display: grid; gap: var(--space-sm); }
+label.field { display: grid; gap: var(--space-3xs); font-size: 0.82rem; font-weight: 500; color: var(--ink-soft); }
+input[type="text"], input[type="number"], select, textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 0.55rem 0.7rem;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+input:hover, textarea:hover, select:hover { border-color: var(--accent); }
+input:focus, textarea:focus, select:focus { background: var(--surface); border-color: var(--accent); outline-offset: 0; }
+textarea { font-family: var(--font-mono); font-size: 0.85rem; resize: vertical; }
+.checks-inline { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-sm); }
+.checks-inline label { display: inline-flex; gap: var(--space-3xs); align-items: center; color: var(--ink); font-size: 0.92rem; }
+input[type="checkbox"] { accent-color: var(--accent); width: 1rem; height: 1rem; }
+
+.button {
+  display: inline-flex; align-items: center; gap: var(--space-2xs);
+  padding: 0.55rem 1.05rem; border-radius: var(--r-sm); cursor: pointer;
+  background: var(--accent); color: oklch(99% 0.01 160); font-weight: 600; font-size: 0.95rem;
+  border: 1px solid transparent; box-shadow: var(--shadow-sm);
+  transition: background 0.15s, transform 0.06s;
+}
+.button:hover { background: var(--accent-deep); }
+.button:active { transform: translateY(1px); }
+.button.ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); box-shadow: none; }
+.button.ghost:hover { background: var(--surface-2); border-color: var(--accent); }
+.button.danger { background: var(--bad); }
+.button.danger:hover { background: oklch(43% 0.165 30); }
+
+/* ── tables ───────────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface-2); }
+th {
+  color: var(--ink-faint); font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; font-size: 0.68rem; border-bottom-color: var(--line-strong);
+}
+code, .mono {
+  font-family: var(--font-mono); font-size: 0.82em; color: var(--ink-soft);
+  background: var(--surface-2); padding: 0.05em 0.35em; border-radius: 4px;
+  word-break: break-all;
+}
+td .mono { display: inline-block; max-width: 22rem; }
+
+/* ── badges ───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 0.12rem 0.55rem; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+.badge.ok   { background: var(--ok-tint);   color: var(--ok);   border-color: oklch(85% 0.07 160); }
+.badge.warn { background: var(--warn-tint); color: var(--warn); border-color: oklch(85% 0.08 80); }
+.badge.bad  { background: var(--bad-tint);  color: var(--bad);  border-color: oklch(85% 0.08 28); }
+
+/* ── verification check rows (full border + leading chip — never a side stripe) ── */
+.check-row {
+  display: flex; gap: var(--space-sm); align-items: baseline;
+  padding: 0.6rem 0.8rem; border-radius: var(--r-sm);
+  border: 1px solid var(--line); margin: var(--space-2xs) 0; background: var(--surface);
+}
+.check-row .mark {
+  flex: none; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  display: inline-grid; place-items: center; font-size: 0.8rem; font-weight: 700;
+  align-self: center;
+}
+.check-row .name { font-weight: 500; }
+.check-row.is-valid { background: var(--ok-tint); border-color: oklch(86% 0.06 160); }
+.check-row.is-valid .mark { background: var(--ok); color: var(--ok-tint); }
+.check-row.is-invalid { background: var(--bad-tint); border-color: oklch(86% 0.07 28); }
+.check-row.is-invalid .mark { background: var(--bad); color: var(--bad-tint); }
+.check-row .detail { color: var(--ink-faint); margin-left: auto; font-size: 0.82rem; font-family: var(--font-mono); }
+
+/* ── verdict ──────────────────────────────────────────────────────────────── */
+.verdict {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  font-family: var(--font-serif); font-weight: 700; font-size: 1.5rem;
+  letter-spacing: 0.01em; padding: 0.5rem 1.1rem; border-radius: var(--r);
+  margin-top: var(--space-sm); border: 1px solid;
+}
+.verdict::before { font-size: 1.1rem; }
+.verdict.accepted { color: var(--ok); background: var(--ok-tint); border-color: oklch(84% 0.07 160); }
+.verdict.accepted::before { content: "✓"; }
+.verdict.rejected { color: var(--bad); background: var(--bad-tint); border-color: oklch(84% 0.08 28); }
+.verdict.rejected::before { content: "✗"; }
+
+/* ── walkthrough stage ────────────────────────────────────────────────────── */
+.stage { display: grid; gap: var(--space-2xs); min-height: 16rem; }
+.stage .act {
+  display: grid; grid-template-columns: 2rem 1fr; gap: var(--space-sm);
+  padding: var(--space-xs) 0; border-bottom: 1px solid var(--line);
+  opacity: 0; transform: translateY(6px);
+  animation: rise 0.5s var(--ease) forwards;
+}
+.stage .act:last-child { border-bottom: none; }
+.stage .act .num {
+  grid-row: 1 / span 2; width: 1.9rem; height: 1.9rem; border-radius: 50%;
+  display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.8rem;
+  background: var(--surface-2); color: var(--ink-faint); border: 1px solid var(--line);
+}
+.stage .act .title { font-family: var(--font-serif); font-weight: 700; font-size: 1.05rem; }
+.stage .act .body { color: var(--ink-soft); font-size: 0.95rem; }
+.stage .act.tone-ok   .num { background: var(--ok-tint);   color: var(--ok);   border-color: oklch(85% 0.07 160); }
+.stage .act.tone-ok   .title { color: var(--ok); }
+.stage .act.tone-warn .num { background: var(--warn-tint); color: var(--warn); border-color: oklch(85% 0.08 80); }
+.stage .act.tone-warn .title { color: var(--warn); }
+.stage .act.tone-bad  .num { background: var(--bad-tint);  color: var(--bad);  border-color: oklch(85% 0.08 28); }
+.stage .act.tone-bad  .title { color: var(--bad); }
+.stage-empty { color: var(--ink-faint); font-style: italic; }
+
+/* ── notice ───────────────────────────────────────────────────────────────── */
+.notice {
+  display: flex; gap: var(--space-2xs); align-items: baseline; flex-wrap: wrap;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--space-xs) var(--space-sm); color: var(--ink-soft); font-size: 0.92rem;
+  margin: var(--space-md) 0;
+}
+
+/* ── footer ───────────────────────────────────────────────────────────────── */
+footer.motto {
+  max-width: 68rem; margin: var(--space-2xl) auto 0; padding: var(--space-lg) var(--space-md);
+  border-top: 1px solid var(--line); color: var(--ink-faint);
+  font-family: var(--font-serif); font-style: italic; font-size: 1.05rem;
+}
+
+/* ── motion ───────────────────────────────────────────────────────────────── */
+@keyframes rise { to { opacity: 1; transform: none; } }
+main.wrap > * { animation: rise 0.45s var(--ease) backwards; }
+main.wrap > *:nth-child(2) { animation-delay: 0.04s; }
+main.wrap > *:nth-child(3) { animation-delay: 0.08s; }
+main.wrap > *:nth-child(4) { animation-delay: 0.12s; }
+main.wrap > *:nth-child(n+5) { animation-delay: 0.16s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .stage .act { opacity: 1; transform: none; }
+}
+
+.vc-pre { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: var(--ink-soft);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--space-md); margin: 0; white-space: pre; overflow:auto; max-height: 30rem; }
+.vc-pre b { color: var(--accent-deep); font-weight: 600; }
+</style></head><body>
+<header class="top"><a class="brand" href="#"><img src="data:image/svg+xml;utf8,&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 64 64&quot;&gt;
+  &lt;rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;12&quot; fill=&quot;#06130f&quot;/&gt;
+  &lt;path d=&quot;M32 4 58 32 32 60 6 32Z&quot; fill=&quot;#36d992&quot;/&gt;
+  &lt;path d=&quot;M32 4 58 32 32 32Z&quot; fill=&quot;#f7c267&quot;/&gt;
+  &lt;path d=&quot;M32 32 32 60 6 32Z&quot; fill=&quot;#f27962&quot;/&gt;
+&lt;/svg&gt;
+" alt=""><span>aion<span class="dot">·</span>trust</span></a><nav class="surfaces"><a class="" href="#">Home</a><a class="" href="#">Issuer</a><a class="" href="#">Wallet</a><a class="active" href="#">Verify</a><a class="" href="#">Walkthrough</a></nav></header>
+<main class="wrap">
+<p class="kicker">interop · it travels</p>
+<h1>The proof travels with it.</h1>
+<p class="lede">A presentation exports as a standard W3C Verifiable Credential — the issuer's key as a
+<code>did:key</code>, our native signature preserved inside the <code>proof</code>. Any compliant tool can read it;
+an aion-trust verifier confirms it.</p>
+<div class="grid" style="grid-template-columns: 1.4fr 1fr; align-items:start;">
+<div class="panel"><h2>Exported Verifiable Credential</h2>
+<pre class="vc-pre">{
+  &quot;@context&quot;: [
+    &quot;https://www.w3.org/ns/credentials/v2&quot;,
+    &quot;https://aion.dev/trust/interop/v1&quot;
+  ],
+  &quot;type&quot;: [
+    &quot;VerifiableCredential&quot;,
+    &quot;EmploymentCredential&quot;
+  ],
+  &quot;issuer&quot;: &quot;did:aion:01479cf2beaeabbffa485cb7c9bf0ec3a2ce8ed05e04b5c7&quot;,
+  &quot;credentialSubject&quot;: {
+    &quot;employer&quot;: &quot;Acme Corp&quot;,
+    &quot;employment_type&quot;: &quot;full_time&quot;,
+    &quot;end&quot;: null,
+    &quot;id&quot;: &quot;did:aion:1a4654832110dd1723b66eaf7e73bf6aa290b2b856246590&quot;
+  },
+  &quot;proof&quot;: {
+    &quot;type&quot;: &quot;AionTrustNativeProof2026&quot;,
+    &quot;verificationMethod&quot;: &quot;did:key:z6MkkJ9V73RxxXZ3r73CXpK76NCuEbGvtR282p462eUQMyKR#z6MkkJ9V73RxxXZ3r73CXpK76NCuEbGvtR282p462eUQMyKR&quot;,
+    &quot;bodyRoot&quot;: &quot;482221eed03c8ed46c2c65cc\u2026&quot;,
+    &quot;fieldCount&quot;: 6,
+    &quot;aionSignature&quot;: &quot;7727576332323e543faa9873\u2026&quot;,
+    &quot;disclosures&quot;: [
+      {
+        &quot;key&quot;: &quot;employer&quot;,
+        &quot;index&quot;: 0,
+        &quot;value&quot;: &quot;Acme Corp&quot;,
+        &quot;audit_path&quot;: [
+          &quot;\u2026&quot;
+        ]
+      },
+      &quot;\u2026 +5 more&quot;
+    ]
+  }
+}</pre></div>
+<div class="panel"><h2>The guarantees come along</h2>
+<p class="lede" style="font-size:0.95rem">Re-imported and checked — every guard holds.</p>
+
+<div class="check-row is-valid"><span class="mark">✓</span><span class="name">Exports → imports → re-verifies</span><span class="detail">round-trip lossless</span></div>
+<div class="check-row is-valid"><span class="mark">✓</span><span class="name">Tampered field is rejected</span><span class="detail">field does not match signed body_root</span></div>
+<div class="check-row is-valid"><span class="mark">✓</span><span class="name">Swapped signing key is rejected</span><span class="detail">did:key ≠ claimed did:aion</span></div>
+
+</div></div>
+</main></body></html>
