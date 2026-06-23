@@ -60,6 +60,8 @@ See [`docs/VISION.md`](docs/VISION.md) for the full case and where the savings l
 field-level selective disclosure (+ anti-replay and predicate proofs), the web surfaces, and W3C
 VC/VP + did:key interop are all implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
+<a href="https://youtu.be/JDClPXRxIAg"><img src="demo/demo-poster.jpg" alt="Watch the aion-trust demo (3 min)" width="720"></a>
+
 ▶ **[Watch the 3-minute demo](https://youtu.be/JDClPXRxIAg)** — a narrated tour of the issuer,
 candidate wallet, and employer verifier, the revoke→reject moment, and W3C interop.
 
