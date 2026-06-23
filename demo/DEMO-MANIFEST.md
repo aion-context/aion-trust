@@ -6,7 +6,8 @@ Surfaces recorded: `http://127.0.0.1:8080` (issuer · wallet · verifier · walk
 
 ## Final artifact
 
-`demo/aion-trust-demo.mp4` — narrated product tour + interop, ~2:47.
+`demo/aion-trust-demo.mp4` — narrated product tour + interop, ~2:55.
+Published: https://youtu.be/JDClPXRxIAg
 
 ## Source artifacts
 
