@@ -26,6 +26,14 @@
   PII-free ledger record keyed by the opaque `claim_id`.
 - **Validity window** — `valid_until` on time-bounded claims (checks, certifications); expiry
   fails verification without a revocation event.
+- **reliance commitment** — `reliance_root` + `reliance_count`: an issuer's omission-detectable
+  Merkle commitment, *inside the signed claim*, to the claims it was issued in reliance on. Lives
+  in the claim (not the ledger), disclosed in a Presentation like a body field; makes revocation
+  dependency-aware without a shared graph or PII. See [`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md).
+- **fifth check (reliance)** — the verify-time step that, at one pinned epoch, fails-closed or
+  ambers a claim when a *declared, disclosed* relied-upon claim is `revoked` (expiry/accreditation
+  only if that upstream is itself disclosed); unresolvable or undisclosed-deeper reliance is never
+  accepted as clean.
 - **Selective disclosure** — the subject revealing only chosen claims (claim-level), fields
   (field-level), or properties (predicate proofs).
 - **body_root** — the Merkle root over a claim body's salted field leaves; the issuer signs it,

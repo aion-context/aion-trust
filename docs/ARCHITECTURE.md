@@ -83,7 +83,7 @@ This yields three properties that a database-backed "verification service" canno
 ### What gets signed
 
 ```
-Claim          = issuer signs over { subject_id, type, schema_id, body_root, field_count, validity, claim_id }
+Claim          = issuer signs over { subject_id, type, schema_id, body_root, field_count, reliance_root, reliance_count, validity, claim_id }
                  body_root = Merkle root over the body's salted field leaves
                  (body, containing PII, travels with the claim in the wallet — never to the ledger)
 Ledger record  = { claim_id, status: issued|revoked, epoch }          ← no PII

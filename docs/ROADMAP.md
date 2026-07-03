@@ -79,6 +79,26 @@ Connect outward and quantify the pitch.
   hours, reuse rate, bad-hire rate) turning the savings thesis into numbers.
 - [`docs/COMPLIANCE.md`](COMPLIANCE.md): mapping to FCRA, EEOC, GDPR/CCPA, NIST 800-63.
 
+## Phase 7 — Dependency-aware trust  ◻ (proposed)
+
+Turn **point-wise** revocation into **dependency-aware** revocation. See
+[`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md). (Reviewed by the panel; a first ledger-edge draft
+was rejected on privacy/soundness and replaced by the issuer-committed design below.)
+
+- **Issuer-committed reliance:** B's issuer commits B's reliance set inside B's signed claim
+  (`reliance_root` + `reliance_count`, the same omission-detectable Merkle commitment as body
+  fields) — **no ledger record, no shared graph, no PII, no new crypto.** Same-issuer authority is
+  inherent (it's B's own issuer's signature); a subject cannot strip a declared reliance.
+- **Verify-time cascade:** the subject discloses reliance in a Presentation; a **fifth, offline,
+  epoch-pinned** check fails-closed/ambers a claim if a *declared* relied-upon claim is `revoked`
+  (validity/accreditation only when the upstream is itself disclosed; unresolvable/undisclosed-
+  deeper = amber, never green). Bounded by issuer honesty — not a guarantee.
+- **Reliance provenance:** the disclosed reliance *is* the "why trustworthy" chain, audience-bound.
+- **Given up on purpose:** the global forward blast-radius query — a public graph is the privacy
+  violation. Forward change-impact stays issuer-private.
+- **Demo:** an `identity` is revoked → a `background_check` presented against it fails/ambers at
+  verify time, offline, with no separate revocation event.
+
 ---
 
 ### Beyond hiring

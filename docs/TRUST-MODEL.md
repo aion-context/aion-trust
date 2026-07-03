@@ -97,6 +97,23 @@ need to contact the issuer:
 - **Validity window** — `valid_until` on checks and certifications. An expired background
   check or lapsed certification fails the validity step without any revocation event.
 
+Both are **point-wise** — they fail the one claim. But a claim often rests on others (a
+`background_check` performed against an `identity`, a `reference` on the referee's identity), and
+neither mechanism connects a fallen fact to the claims that relied on it.
+
+- **Dependency-aware revocation (reliance).** B's issuer commits, inside B's signed claim, to the
+  claims B was issued *in reliance on* — a `reliance_root` + `reliance_count`, the same
+  omission-detectable Merkle commitment used for body fields (**no** ledger record, no shared
+  graph, no PII). The subject discloses those targets in a Presentation, and verification gains a
+  fifth, offline step, evaluated at one pinned epoch: for each disclosed reliance target, read its
+  **status** from the ledger and **fail-closed (or amber)** if it is `revoked`. Expiry and upstream
+  accreditation are checked only when the upstream claim is itself disclosed (the status ledger
+  carries neither). An unresolvable or undisclosed-deeper target is *at least amber, never green*.
+  A predicate still runs only over a claim that passed *every* check, reliance included. The
+  transitive cascade is **revocation-complete for declared reliance** — bounded by issuer honesty,
+  not a guarantee against a malicious issuer that under-declares. Full design in
+  [`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md).
+
 ## Threat model (initial)
 
 | Threat | Defense |
@@ -105,6 +122,7 @@ need to contact the issuer:
 | **Self-issued "employer" claim** | the fake employer is not an accredited issuer → self-asserted, not authoritative |
 | **Stolen presentation replayed** | presentations are audience-bound, nonce-bound, and expiring |
 | **Issuer compromised / mistaken** | revocation + epoch rotation; high-assurance categories need K-of-N so one bad accreditor isn't enough |
+| **A load-bearing fact silently falls** (an identity a check rested on is later revoked, leaving the dependent claim standing) | the issuer commits the claim's reliance set (`reliance_root`); the subject must disclose it (omission-detectable), and the fifth check fails-closed/ambers the claim if a **declared** relied-upon claim is revoked — offline, at one pinned epoch. Bounded by issuer honesty, not a guarantee against an issuer that under-declares ([`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md)) |
 | **PII leak from the ledger** | impossible by construction — the ledger holds no PII, only keys/status/schemas |
 | **Coercion to over-disclose** | field-level disclosure + predicate (coarse-attribute) proofs reduce what *can* be demanded |
 | **Subject key loss** | signed key-succession records + a recovery policy (Phase 2) |
