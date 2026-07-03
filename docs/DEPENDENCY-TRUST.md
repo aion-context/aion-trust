@@ -209,7 +209,25 @@ tests (real Ed25519/BLAKE3, under the `cargo mutants` gate) when Phase 7 is impl
 
 ## Status
 
-**Phase 7 — proposed (design).** No code. `reliance_root`/`reliance_count` would extend the
-`Claim` in `aion-trust-claims` (alongside `body_root`/`field_count`); reliance disclosure extends
-the Presentation builder in `aion-trust-wallet`; the fifth check extends the verifier. The forward
-issuer-side blast-radius index would live in `aion-trust-registry`, issuer-private.
+**Phase 7 — IMPLEMENTED (strict-policy subset).** The commitment + disclosure + fifth check are
+built and gated: `reliance_root`/`reliance_count` in the signed `Claim`
+([`aion-trust-claims`]); the reliance-leaf disclosure in `DisclosedClaim`; the fifth check in
+`verify_presentation` (fail-closed, at the verifier's `now`); the `kind` hiding sub-commitment; and
+VC interop carrying the commitment. Re-reviewed by the panel on the **code**: saltzer PII-SAFE,
+lamport SOUND, rivest SOUND — the executable-proof hypotheses are now Rust tests under the
+`cargo mutants` 0-survivor gate.
+
+**Scoped follow-ups (Phase 3, when revocation is fully wired against aion-context):**
+
+- **Tri-state upstream status (rivest R1).** `TrustAnchor::is_revoked` returns `bool`, so an
+  *unresolvable* upstream status resolves to "not revoked" (fail-open). Today this is inert —
+  revocation is a Phase-3 stub. When it is wired, the anchor needs an `Unresolvable` state and the
+  fifth check must treat it as fail-closed/amber, per the boundary rule above.
+- **Amber / undisclosed-deeper (lamport, rivest R2).** Only the strict fail-closed policy is
+  implemented (binary `accepted`). The *amber* verdict — and the "undisclosed-deeper reliance ⇒
+  at-least-amber" signal for a status-only target — is not yet surfaced; a status-only target has
+  its revocation checked but not its own deeper reliance (the documented revocation-only floor).
+- **`kind` opening.** No path yet opens `kind_commit` for the provenance story; `kind` is currently
+  always withheld (more private than the N1 floor — fine, but the reverse "why-trustworthy" story
+  is unimplemented).
+- The forward issuer-side blast-radius index (`aion-trust-registry`, issuer-private) is unbuilt.

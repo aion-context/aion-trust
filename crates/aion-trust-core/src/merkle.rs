@@ -21,6 +21,12 @@ pub const FIELD_LEAF_DOMAIN: &[u8] = b"aion-trust/claim-field-leaf/v1";
 /// Domain tag for internal nodes.
 pub const FIELD_NODE_DOMAIN: &[u8] = b"aion-trust/claim-field-node/v1";
 
+/// Domain tag for reliance leaves — distinct from [`FIELD_LEAF_DOMAIN`], so a reliance leaf and
+/// a body-field leaf can never share a preimage even under the same master salt. The internal
+/// Merkle *node* domain is shared with the body tree, which is safe: leaf-domain separation
+/// already makes the two leaf sets disjoint, and the two roots live in distinct signed fields.
+pub const RELIANCE_LEAF_DOMAIN: &[u8] = b"aion-trust/reliance-leaf/v1";
+
 /// Why a Merkle operation failed. Kept local (not [`crate::TrustError`]) so this module stays
 /// free of claim-domain semantics; callers map it at their boundary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -55,6 +61,25 @@ pub fn field_leaf_hash(index: u32, key: &str, salt: &[u8; 32], jcs_value: &[u8])
         .field(key.as_bytes())
         .field(salt)
         .field(jcs_value);
+    crypto::hash(&w.into_bytes())
+}
+
+/// The hash of one reliance leaf, binding its position, salt, the relied-upon `claim_id`, and a
+/// (separately-salted) commitment to the reliance `kind`. Built with [`SigningWriter`]
+/// (length-prefixed, domain-tagged) under [`RELIANCE_LEAF_DOMAIN`], so no two distinct
+/// `(index, salt, from_claim_id, kind_commit)` tuples share a preimage, and a reliance leaf can
+/// never be replayed as a body-field leaf.
+pub fn reliance_leaf_hash(
+    index: u32,
+    salt: &[u8; 32],
+    from_claim_id: &[u8],
+    kind_commit: &[u8; 32],
+) -> [u8; 32] {
+    let mut w = SigningWriter::new(RELIANCE_LEAF_DOMAIN);
+    w.u32(index)
+        .field(salt)
+        .field(from_claim_id)
+        .field(kind_commit);
     crypto::hash(&w.into_bytes())
 }
 
@@ -242,6 +267,33 @@ mod tests {
         assert_ne!(
             field_leaf_hash(0, "ab", &s, b"c"),
             field_leaf_hash(0, "a", &s, b"bc")
+        );
+    }
+
+    #[test]
+    fn reliance_leaf_hash_binds_every_input() {
+        let s = [3u8; 32];
+        let kc = [4u8; 32];
+        let base = reliance_leaf_hash(0, &s, b"cidA", &kc);
+        assert_ne!(base, reliance_leaf_hash(1, &s, b"cidA", &kc)); // index
+        assert_ne!(base, reliance_leaf_hash(0, &[7u8; 32], b"cidA", &kc)); // salt
+        assert_ne!(base, reliance_leaf_hash(0, &s, b"cidB", &kc)); // claim_id
+        assert_ne!(base, reliance_leaf_hash(0, &s, b"cidA", &[7u8; 32])); // kind_commit
+                                                                          // length-prefixing prevents the (salt,claim_id) boundary slide
+        assert_ne!(
+            reliance_leaf_hash(0, &s, b"ab", &kc),
+            reliance_leaf_hash(0, &s, b"a", &kc)
+        );
+    }
+
+    #[test]
+    fn reliance_and_field_leaves_are_domain_separated() {
+        // Same index/salt/bytes must not collide across the two leaf kinds.
+        let s = [5u8; 32];
+        let kc = [6u8; 32];
+        assert_ne!(
+            reliance_leaf_hash(0, &s, b"x", &kc),
+            field_leaf_hash(0, "x", &s, &kc[..])
         );
     }
 

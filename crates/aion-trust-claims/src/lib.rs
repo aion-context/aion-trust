@@ -15,6 +15,7 @@ pub(crate) mod fields;
 pub mod nonce;
 pub mod predicate;
 pub mod presentation;
+pub mod reliance;
 
 pub use anchor::{IssuerStanding, TrustAnchor};
 pub use bodies::{
@@ -31,3 +32,4 @@ pub use presentation::{
     build_presentation, verify_presentation, verify_presentation_with_predicates, Check,
     IssuerDirectory, Presentation, VerificationReport,
 };
+pub use reliance::{empty_reliance_root, reliance_commitment, ReliesKind, ReliesOn};

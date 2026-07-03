@@ -30,6 +30,10 @@ pub fn export_disclosed_vc(d: &DisclosedClaim, issuer_vk: &VerifyingKey) -> Resu
         .get("fields")
         .and_then(Value::as_array)
         .ok_or(InteropError::WrongType("fields"))?;
+    let reliance = native
+        .get("reliance")
+        .and_then(Value::as_array)
+        .ok_or(InteropError::WrongType("reliance"))?;
 
     let mut subject = serde_json::Map::new();
     subject.insert("id".into(), json!(subject_id));
@@ -46,8 +50,11 @@ pub fn export_disclosed_vc(d: &DisclosedClaim, issuer_vk: &VerifyingKey) -> Resu
         "schemaId": schema_id,
         "bodyRoot": get_str(&native, "body_root")?,
         "fieldCount": take(&native, "field_count")?,
+        "relianceRoot": get_str(&native, "reliance_root")?,
+        "relianceCount": take(&native, "reliance_count")?,
         "aionSignature": get_str(&native, "issuer_signature")?,
         "disclosures": fields,
+        "relianceDisclosures": reliance,
     });
 
     let mut vc = json!({
@@ -116,8 +123,11 @@ fn rebuild_native(doc: &Value, proof: &Value) -> Result<Value> {
         "schema_id": get_str(proof, "schemaId")?,
         "body_root": get_str(proof, "bodyRoot")?,
         "field_count": take(proof, "fieldCount")?,
+        "reliance_root": get_str(proof, "relianceRoot")?,
+        "reliance_count": take(proof, "relianceCount")?,
         "issuer_signature": get_str(proof, "aionSignature")?,
         "fields": take(proof, "disclosures")?,
+        "reliance": take(proof, "relianceDisclosures")?,
     }))
 }
 
@@ -150,7 +160,9 @@ pub(crate) fn category_to_vc_type(category: &str) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aion_trust_claims::{Claim, ClaimBody, EmploymentBody, FieldSelector, Validity};
+    use aion_trust_claims::{
+        Claim, ClaimBody, EmploymentBody, FieldSelector, ReliesKind, ReliesOn, Validity,
+    };
     use aion_trust_core::{Identity, Timestamp};
 
     fn issued() -> (Identity, Claim) {
@@ -211,6 +223,45 @@ mod tests {
                                                  // master_salt must never appear anywhere in the exported artifact
         assert!(!vc.to_string().contains("master_salt"));
         assert!(!vc.to_string().contains(&claim.master_salt));
+    }
+
+    #[test]
+    fn exported_vc_never_leaks_the_raw_reliance_kind() {
+        // A reliance claim's VC carries the reliance commitment but NEVER the raw kind label —
+        // only the hiding kind_commit — the same "never serialize a full Claim to a shared sink"
+        // guard that protects master_salt.
+        let (_, up) = issued();
+        let issuer = Identity::generate();
+        let subject = Identity::generate().did();
+        let body = ClaimBody::Employment(EmploymentBody {
+            employer: "Screening".into(),
+            title: "clear".into(),
+            employment_type: "full_time".into(),
+            start: "2021".into(),
+            end: None,
+            rehire_eligible: false,
+        });
+        let target = ReliesOn {
+            from_claim_id: up.claim_id().clone(),
+            kind: ReliesKind::IdentityBasis,
+        };
+        let claim = Claim::issue_with_reliance(
+            &issuer,
+            &subject,
+            Validity {
+                from: Timestamp(0),
+                until: None,
+            },
+            body,
+            &[target],
+        )
+        .unwrap();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let vc = export_disclosed_vc(&d, &issuer.verifying_key()).unwrap();
+        let s = vc.to_string();
+        assert!(s.contains("relianceDisclosures")); // reliance IS carried…
+        assert!(!s.contains("identity_basis")); // …but the raw kind label never appears
+        assert!(!s.contains(&claim.master_salt));
     }
 
     #[test]
