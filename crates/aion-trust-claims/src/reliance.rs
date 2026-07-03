@@ -46,8 +46,9 @@ impl ReliesKind {
 }
 
 /// A dependency an issuer declares for the claim it is issuing: "issued in reliance on
-/// `from_claim_id`", with `kind` recording why. The issuer's input to the reliance commitment.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// `from_claim_id`", with `kind` recording why. The issuer's input to the reliance commitment;
+/// kept privately with the claim (wallet-only), like the body.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReliesOn {
     pub from_claim_id: ClaimId,
     pub kind: ReliesKind,

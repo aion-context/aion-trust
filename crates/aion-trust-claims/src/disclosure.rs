@@ -19,7 +19,7 @@ use aion_trust_core::{ClaimId, Did, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::bodies::ClaimBody;
-use crate::claim::{signing_bytes, Claim, ClaimReject, Validity};
+use crate::claim::{signing_bytes, Claim, ClaimCommit, ClaimReject, Validity};
 use crate::fields::BodyLeaf;
 
 /// Which fields of a claim to disclose. [`FieldSelector::All`] is the claim-level default.
@@ -54,6 +54,10 @@ pub struct DisclosedClaim {
     pub schema_id: String,
     pub body_root: String,
     pub field_count: u32,
+    /// The claim's reliance commitment — signed scalars carried so the signature reconstructs.
+    /// The reliance *leaves* are disclosed separately (a later increment), never the targets.
+    pub reliance_root: String,
+    pub reliance_count: u32,
     pub issuer_signature: String,
     fields: Vec<RevealedField>,
 }
@@ -111,6 +115,8 @@ impl DisclosedClaim {
             schema_id: claim.schema_id().to_string(),
             body_root: claim.body_root.clone(),
             field_count: claim.field_count,
+            reliance_root: claim.reliance_root.clone(),
+            reliance_count: claim.reliance_count,
             issuer_signature: claim.issuer_signature.clone(),
             fields,
         })
@@ -179,14 +185,20 @@ impl DisclosedClaim {
             return Err(ClaimReject::IssuerKeyMismatch);
         }
         let body_root = decode_array::<32>(&self.body_root).map_err(|_| ClaimReject::Malformed)?;
+        let reliance_root =
+            decode_array::<32>(&self.reliance_root).map_err(|_| ClaimReject::Malformed)?;
         let signing = signing_bytes(
             &self.subject_id,
             &self.issuer_id,
             &self.category,
             &self.schema_id,
             &self.validity,
-            &body_root,
-            self.field_count,
+            &ClaimCommit {
+                body_root: &body_root,
+                field_count: self.field_count,
+                reliance_root: &reliance_root,
+                reliance_count: self.reliance_count,
+            },
         );
         if ClaimId::from_signing_bytes(&signing) != self.claim_id {
             return Err(ClaimReject::ClaimIdMismatch);
@@ -484,6 +496,7 @@ mod tests {
         let (issuer, vk, claim) = issue();
         let d = claim.disclose(&FieldSelector::All).unwrap();
         let body_root = decode_array::<32>(&d.body_root).unwrap();
+        let reliance_root = decode_array::<32>(&d.reliance_root).unwrap();
         let bogus_count = d.field_count + 1;
         let signing = signing_bytes(
             &d.subject_id,
@@ -491,8 +504,12 @@ mod tests {
             &d.category,
             &d.schema_id,
             &d.validity,
-            &body_root,
-            bogus_count,
+            &ClaimCommit {
+                body_root: &body_root,
+                field_count: bogus_count,
+                reliance_root: &reliance_root,
+                reliance_count: d.reliance_count,
+            },
         );
         let forged = DisclosedClaim {
             claim_id: ClaimId::from_signing_bytes(&signing),

@@ -46,6 +46,8 @@ pub fn export_disclosed_vc(d: &DisclosedClaim, issuer_vk: &VerifyingKey) -> Resu
         "schemaId": schema_id,
         "bodyRoot": get_str(&native, "body_root")?,
         "fieldCount": take(&native, "field_count")?,
+        "relianceRoot": get_str(&native, "reliance_root")?,
+        "relianceCount": take(&native, "reliance_count")?,
         "aionSignature": get_str(&native, "issuer_signature")?,
         "disclosures": fields,
     });
@@ -116,6 +118,8 @@ fn rebuild_native(doc: &Value, proof: &Value) -> Result<Value> {
         "schema_id": get_str(proof, "schemaId")?,
         "body_root": get_str(proof, "bodyRoot")?,
         "field_count": take(proof, "fieldCount")?,
+        "reliance_root": get_str(proof, "relianceRoot")?,
+        "reliance_count": take(proof, "relianceCount")?,
         "issuer_signature": get_str(proof, "aionSignature")?,
         "fields": take(proof, "disclosures")?,
     }))

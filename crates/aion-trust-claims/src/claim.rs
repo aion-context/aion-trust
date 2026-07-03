@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::bodies::ClaimBody;
 use crate::disclosure::{DisclosedClaim, FieldSelector};
 use crate::fields::body_leaves;
+use crate::reliance::{reliance_commitment, ReliesOn};
 
 pub const CLAIM_DOMAIN: &[u8] = b"aion-trust/claim/v1";
 
@@ -37,6 +38,8 @@ pub enum ClaimReject {
     BadSignature,
     /// A disclosure withheld a field the verifier requires (omission detection).
     MissingField,
+    /// The declared reliance set does not match the signed `reliance_root`/`reliance_count`.
+    ReliesTampered,
     Malformed,
 }
 
@@ -48,6 +51,7 @@ impl std::fmt::Display for ClaimReject {
             ClaimReject::ClaimIdMismatch => "claim_id does not match signed content",
             ClaimReject::BadSignature => "issuer signature is invalid",
             ClaimReject::MissingField => "a required field was not disclosed",
+            ClaimReject::ReliesTampered => "reliance does not match the signed reliance_root",
             ClaimReject::Malformed => "claim is malformed",
         };
         f.write_str(s)
@@ -73,28 +77,54 @@ pub struct Claim {
     pub body_root: String,
     /// Number of field leaves in the tree. Signed, so the tree's shape cannot be altered.
     pub field_count: u32,
+    /// The claims this was issued *in reliance on* — private and wallet-only, like `body`; it
+    /// never travels in a [`DisclosedClaim`]. Drives `reliance_root`/`reliance_count`.
+    reliance: Vec<ReliesOn>,
+    /// Merkle root over the reliance leaves, or the empty-reliance sentinel. Signed, so the
+    /// declared dependency set cannot be altered or stripped.
+    pub reliance_root: String,
+    /// Number of declared reliance leaves. Signed; `0` (with the sentinel root) means none.
+    pub reliance_count: u32,
     pub issuer_signature: String,
 }
 
 impl Claim {
-    /// Issue (sign) a claim of any category for `subject`. The issuer signs the
-    /// domain-separated content; `claim_id` is the content hash.
+    /// Issue (sign) a claim of any category for `subject`, declaring no reliance. Convenience
+    /// over [`Self::issue_with_reliance`] — non-breaking for existing callers.
     pub fn issue(
         issuer: &Identity,
         subject: &Did,
         validity: Validity,
         body: ClaimBody,
     ) -> Result<Claim, ClaimReject> {
+        Claim::issue_with_reliance(issuer, subject, validity, body, &[])
+    }
+
+    /// Issue (sign) a claim produced *in reliance on* `reliance`. The issuer signs the
+    /// domain-separated content — body **and** reliance commitments — and `claim_id` is the
+    /// content hash. `reliance` is kept privately with the claim (wallet-only), like the body.
+    pub fn issue_with_reliance(
+        issuer: &Identity,
+        subject: &Did,
+        validity: Validity,
+        body: ClaimBody,
+        reliance: &[ReliesOn],
+    ) -> Result<Claim, ClaimReject> {
         let master_salt = random_salt();
         let (body_root, field_count) = body_commitment(&master_salt, &body)?;
+        let (reliance_root, reliance_count) = reliance_commitment(&master_salt, reliance)?;
         let signing = signing_bytes(
             subject,
             &issuer.did(),
             body.category(),
             body.schema_id(),
             &validity,
-            &body_root,
-            field_count,
+            &ClaimCommit {
+                body_root: &body_root,
+                field_count,
+                reliance_root: &reliance_root,
+                reliance_count,
+            },
         );
         Ok(Claim {
             claim_id: ClaimId::from_signing_bytes(&signing),
@@ -105,6 +135,9 @@ impl Claim {
             master_salt: to_hex(&master_salt),
             body_root: to_hex(&body_root),
             field_count,
+            reliance: reliance.to_vec(),
+            reliance_root: to_hex(&reliance_root),
+            reliance_count,
             issuer_signature: to_hex(&issuer.sign(&signing)),
         })
     }
@@ -164,14 +197,22 @@ impl Claim {
         if to_hex(&body_root) != self.body_root || field_count != self.field_count {
             return Err(ClaimReject::BodyTampered);
         }
+        let (reliance_root, reliance_count) = reliance_commitment(&master_salt, &self.reliance)?;
+        if to_hex(&reliance_root) != self.reliance_root || reliance_count != self.reliance_count {
+            return Err(ClaimReject::ReliesTampered);
+        }
         let signing = signing_bytes(
             &self.subject_id,
             &self.issuer_id,
             self.body.category(),
             self.body.schema_id(),
             &self.validity,
-            &body_root,
-            field_count,
+            &ClaimCommit {
+                body_root: &body_root,
+                field_count,
+                reliance_root: &reliance_root,
+                reliance_count,
+            },
         );
         if ClaimId::from_signing_bytes(&signing) != self.claim_id {
             return Err(ClaimReject::ClaimIdMismatch);
@@ -238,17 +279,28 @@ fn body_commitment(
     Ok((root, count))
 }
 
-/// The issuer-signed message. Binds the body only through `category`, `schema_id`, `body_root`,
-/// and `field_count` — never the body bytes — so a verifier can reconstruct it from a
-/// disclosed claim that carries no body. `field_count` pins the tree's shape.
+/// The Merkle commitments an issuer signs alongside a claim's identity fields: the body
+/// (`body_root`/`field_count`) and the reliance set (`reliance_root`/`reliance_count`). Grouped
+/// so the signed message binds all four without an over-long argument list.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ClaimCommit<'a> {
+    pub body_root: &'a [u8; 32],
+    pub field_count: u32,
+    pub reliance_root: &'a [u8; 32],
+    pub reliance_count: u32,
+}
+
+/// The issuer-signed message. Binds the body and reliance only through their roots and counts —
+/// never the body bytes or the reliance targets — so a verifier can reconstruct it from a
+/// disclosed claim that carries neither. The counts pin each tree's shape, so a stripped or
+/// re-shaped body or reliance set breaks the signature.
 pub(crate) fn signing_bytes(
     subject: &Did,
     issuer: &Did,
     category: &str,
     schema_id: &str,
     validity: &Validity,
-    body_root: &[u8; 32],
-    field_count: u32,
+    commit: &ClaimCommit,
 ) -> Vec<u8> {
     let mut w = SigningWriter::new(CLAIM_DOMAIN);
     w.field(subject.as_bytes())
@@ -264,7 +316,10 @@ pub(crate) fn signing_bytes(
             w.field(b"open");
         }
     }
-    w.field(body_root).u32(field_count);
+    w.field(commit.body_root)
+        .u32(commit.field_count)
+        .field(commit.reliance_root)
+        .u32(commit.reliance_count);
     w.into_bytes()
 }
 
@@ -272,6 +327,7 @@ pub(crate) fn signing_bytes(
 mod tests {
     use super::*;
     use crate::bodies::{EmploymentBody, SkillBody};
+    use crate::reliance::{empty_reliance_root, ReliesKind, ReliesOn};
     use aion_trust_core::Identity;
 
     fn employment() -> ClaimBody {
@@ -338,21 +394,52 @@ mod tests {
             until: None,
         };
         let h = [7u8; 32];
-        let base = signing_bytes(&s, &i, "employment", "schema/v1", &v, &h, 6);
+        let rr = [5u8; 32];
+        // vary the four commitment fields (subject/issuer/category/schema/validity fixed)
+        let commit = |br: &[u8; 32], fc: u32, relr: &[u8; 32], relc: u32| {
+            signing_bytes(
+                &s,
+                &i,
+                "employment",
+                "schema/v1",
+                &v,
+                &ClaimCommit {
+                    body_root: br,
+                    field_count: fc,
+                    reliance_root: relr,
+                    reliance_count: relc,
+                },
+            )
+        };
+        let base = commit(&h, 6, &rr, 1);
         assert!(!base.is_empty());
+        assert_ne!(base, commit(&[8u8; 32], 6, &rr, 1)); // body_root
+        assert_ne!(base, commit(&h, 7, &rr, 1)); // field_count
+        assert_ne!(base, commit(&h, 6, &[9u8; 32], 1)); // reliance_root
+        assert_ne!(base, commit(&h, 6, &rr, 2)); // reliance_count
+                                                 // vary the identity fields (commitment fixed)
+        let fixed = ClaimCommit {
+            body_root: &h,
+            field_count: 6,
+            reliance_root: &rr,
+            reliance_count: 1,
+        };
         let other = Did::from_string("did:aion:other".into());
         assert_ne!(
             base,
-            signing_bytes(&other, &i, "employment", "schema/v1", &v, &h, 6)
-        );
+            signing_bytes(&other, &i, "employment", "schema/v1", &v, &fixed)
+        ); // subject
         assert_ne!(
             base,
-            signing_bytes(&s, &other, "employment", "schema/v1", &v, &h, 6)
-        );
-        assert_ne!(base, signing_bytes(&s, &i, "skill", "schema/v1", &v, &h, 6)); // category
+            signing_bytes(&s, &other, "employment", "schema/v1", &v, &fixed)
+        ); // issuer
         assert_ne!(
             base,
-            signing_bytes(&s, &i, "employment", "schema/v2", &v, &h, 6)
+            signing_bytes(&s, &i, "skill", "schema/v1", &v, &fixed)
+        ); // category
+        assert_ne!(
+            base,
+            signing_bytes(&s, &i, "employment", "schema/v2", &v, &fixed)
         ); // schema
         let v_from = Validity {
             from: Timestamp(2),
@@ -360,25 +447,94 @@ mod tests {
         };
         assert_ne!(
             base,
-            signing_bytes(&s, &i, "employment", "schema/v1", &v_from, &h, 6)
-        );
+            signing_bytes(&s, &i, "employment", "schema/v1", &v_from, &fixed)
+        ); // from
         let v_until = Validity {
             from: Timestamp(1),
             until: Some(Timestamp(9)),
         };
-        // open vs until arm
         assert_ne!(
             base,
-            signing_bytes(&s, &i, "employment", "schema/v1", &v_until, &h, 6)
+            signing_bytes(&s, &i, "employment", "schema/v1", &v_until, &fixed)
+        ); // until arm
+    }
+
+    #[test]
+    fn issue_with_reliance_round_trips_and_verifies() {
+        let issuer = Identity::generate();
+        let subject = Did::from_string("did:aion:subj".into());
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let target = ReliesOn {
+            from_claim_id: ClaimId::from_signing_bytes(b"upstream-identity"),
+            kind: ReliesKind::IdentityBasis,
+        };
+        let claim =
+            Claim::issue_with_reliance(&issuer, &subject, validity, employment(), &[target])
+                .unwrap();
+        assert_eq!(claim.reliance_count, 1);
+        assert_ne!(claim.reliance_root, to_hex(&empty_reliance_root()));
+        assert!(claim.verify(&issuer.verifying_key()).is_ok());
+    }
+
+    #[test]
+    fn default_issue_declares_no_reliance() {
+        let issuer = Identity::generate();
+        let subject = Did::from_string("did:aion:subj".into());
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let claim = Claim::issue(&issuer, &subject, validity, employment()).unwrap();
+        assert_eq!(claim.reliance_count, 0);
+        assert_eq!(claim.reliance_root, to_hex(&empty_reliance_root()));
+        assert!(claim.verify(&issuer.verifying_key()).is_ok());
+    }
+
+    #[test]
+    fn h4_tampered_reliance_count_is_rejected() {
+        // Forge reliance_count in the serialized claim without the matching private set — the
+        // recompute catches it (the strip/downgrade defense). Pins the `||` in verify.
+        let issuer = Identity::generate();
+        let subject = Did::from_string("did:aion:subj".into());
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let target = ReliesOn {
+            from_claim_id: ClaimId::from_signing_bytes(b"upstream"),
+            kind: ReliesKind::PriorCheck,
+        };
+        let claim =
+            Claim::issue_with_reliance(&issuer, &subject, validity, employment(), &[target])
+                .unwrap();
+        let mut v = serde_json::to_value(&claim).unwrap();
+        v["reliance_count"] = serde_json::json!(0);
+        let tampered: Claim = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            tampered.verify(&issuer.verifying_key()).err(),
+            Some(ClaimReject::ReliesTampered)
         );
-        assert_ne!(
-            base,
-            signing_bytes(&s, &i, "employment", "schema/v1", &v, &[8u8; 32], 6)
-        ); // root
-        assert_ne!(
-            base,
-            signing_bytes(&s, &i, "employment", "schema/v1", &v, &h, 7)
-        ); // field_count
+    }
+
+    #[test]
+    fn h4_tampered_reliance_root_is_rejected() {
+        let issuer = Identity::generate();
+        let subject = Did::from_string("did:aion:subj".into());
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let claim = Claim::issue(&issuer, &subject, validity, employment()).unwrap();
+        let mut v = serde_json::to_value(&claim).unwrap();
+        v["reliance_root"] = serde_json::json!(to_hex(&[0u8; 32]));
+        let tampered: Claim = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            tampered.verify(&issuer.verifying_key()).err(),
+            Some(ClaimReject::ReliesTampered)
+        );
     }
 
     #[test]
