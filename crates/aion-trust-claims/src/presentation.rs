@@ -359,7 +359,9 @@ fn authenticated_claim_checks(
     // (disclosed and proven against reliance_root in `verified`) must itself be unrevoked as of
     // the verifier's `now`. A revoked basis fails the dependent claim closed — transitive
     // revocation, offline, at one verifier-chosen epoch (a strict-policy verifier; an amber policy
-    // would flag instead). See `docs/DEPENDENCY-TRUST.md`.
+    // would flag instead). A status-only target (revealed as a claim_id, not itself disclosed as a
+    // full claim) has its *revocation* checked but not its own deeper reliance — clean here is the
+    // revocation-only floor, not full transitive assurance. See `docs/DEPENDENCY-TRUST.md`.
     let reliance_ok = verified
         .reliance()
         .iter()

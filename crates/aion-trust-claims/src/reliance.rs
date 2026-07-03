@@ -191,6 +191,9 @@ mod tests {
         assert_eq!(derive_reliance_salt(&m, 0), derive_reliance_salt(&m, 0)); // deterministic
                                                                               // leaf salt and kind salt use different domains → different value at the same index
         assert_ne!(derive_reliance_salt(&m, 0), derive_kind_salt(&m, 0));
+        // the kind salt itself must vary with index and master salt (never a constant)
+        assert_ne!(derive_kind_salt(&m, 0), derive_kind_salt(&m, 1)); // index
+        assert_ne!(derive_kind_salt(&m, 0), derive_kind_salt(&[1u8; 32], 0)); // master
     }
 
     #[test]
@@ -243,6 +246,9 @@ mod tests {
         assert_eq!(count, 0);
         assert_eq!(root, empty_reliance_root());
         assert_eq!(empty_reliance_root(), empty_reliance_root()); // fixed
+                                                                  // …and a real domain-separated hash, never a trivial constant
+        assert_ne!(empty_reliance_root(), [0u8; 32]);
+        assert_ne!(empty_reliance_root(), [1u8; 32]);
         assert_ne!(
             root,
             reliance_commitment(&[0u8; 32], &targets()).unwrap().0,

@@ -68,8 +68,8 @@ pub struct DisclosedClaim {
     pub schema_id: String,
     pub body_root: String,
     pub field_count: u32,
-    /// The claim's reliance commitment — signed scalars carried so the signature reconstructs.
-    /// The reliance *leaves* are disclosed separately (a later increment), never the targets.
+    /// The claim's reliance commitment — signed scalars, carried so the signature reconstructs
+    /// and the disclosed reliance leaves (below) can be proven against `reliance_root`.
     pub reliance_root: String,
     pub reliance_count: u32,
     pub issuer_signature: String,
@@ -473,6 +473,49 @@ mod tests {
         let d = claim.disclose(&FieldSelector::All).unwrap();
         let mut v = serde_json::to_value(&d).unwrap();
         v["reliance"] = serde_json::json!([]);
+        let tampered: DisclosedClaim = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            tampered.verify(&vk).err(),
+            Some(ClaimReject::ReliesTampered)
+        );
+    }
+
+    #[test]
+    fn duplicated_reliance_index_is_rejected() {
+        // Two disclosed leaves at the same index (count stays 2) — the bijection check must reject
+        // it, else index 1's target could be silently swapped for a duplicate of index 0's.
+        let (_, _, up1) = issue();
+        let (_, _, up2) = issue();
+        let issuer = Identity::generate();
+        let vk = issuer.verifying_key();
+        let subject = Identity::generate().did();
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let targets = [
+            ReliesOn {
+                from_claim_id: up1.claim_id().clone(),
+                kind: ReliesKind::IdentityBasis,
+            },
+            ReliesOn {
+                from_claim_id: up2.claim_id().clone(),
+                kind: ReliesKind::PriorCheck,
+            },
+        ];
+        let body = ClaimBody::Employment(EmploymentBody {
+            employer: "Bg".into(),
+            title: "clear".into(),
+            employment_type: "full_time".into(),
+            start: "2021".into(),
+            end: None,
+            rehire_eligible: false,
+        });
+        let claim =
+            Claim::issue_with_reliance(&issuer, &subject, validity, body, &targets).unwrap();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let mut v = serde_json::to_value(&d).unwrap();
+        v["reliance"][1] = v["reliance"][0].clone(); // duplicate index 0, dropping index 1
         let tampered: DisclosedClaim = serde_json::from_value(v).unwrap();
         assert_eq!(
             tampered.verify(&vk).err(),
