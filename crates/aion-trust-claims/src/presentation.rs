@@ -355,7 +355,22 @@ fn authenticated_claim_checks(
     };
     let not_revoked = !anchor.is_revoked(claim.claim_id(), now);
     check(checks, "claim not revoked", not_revoked, id);
-    within && accredited_ok && not_revoked
+    // Fifth check — dependency-aware revocation. Every claim this one was issued *in reliance on*
+    // (disclosed and proven against reliance_root in `verified`) must itself be unrevoked as of
+    // the verifier's `now`. A revoked basis fails the dependent claim closed — transitive
+    // revocation, offline, at one verifier-chosen epoch (a strict-policy verifier; an amber policy
+    // would flag instead). See `docs/DEPENDENCY-TRUST.md`.
+    let reliance_ok = verified
+        .reliance()
+        .iter()
+        .all(|dep| !anchor.is_revoked(dep, now));
+    check(
+        checks,
+        "reliance intact (no relied-upon claim revoked)",
+        reliance_ok,
+        format!("{} relied-upon claim(s)", verified.reliance().len()),
+    );
+    within && accredited_ok && not_revoked && reliance_ok
 }
 
 fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {
@@ -446,6 +461,116 @@ mod tests {
     use crate::predicate::PredicateOp;
     use crate::ClaimBody;
     use aion_context::crypto::VerifyingKey;
+
+    use crate::bodies::EmploymentBody;
+    use crate::reliance::{ReliesKind, ReliesOn};
+
+    fn emp(employer: &str) -> ClaimBody {
+        ClaimBody::Employment(EmploymentBody {
+            employer: employer.into(),
+            title: "role".into(),
+            employment_type: "full_time".into(),
+            start: "2021".into(),
+            end: None,
+            rehire_eligible: false,
+        })
+    }
+
+    /// An anchor that recognizes one issuer and revokes one claim as-of an epoch — enough to
+    /// exercise the fifth (dependency-revocation) check with a verifier-controlled `now`.
+    struct ReliesAnchor {
+        vk: VerifyingKey,
+        revoked_at: Option<(ClaimId, Timestamp)>,
+    }
+
+    impl TrustAnchor for ReliesAnchor {
+        fn issuer_key(&self, _issuer: &Did) -> Option<VerifyingKey> {
+            Some(self.vk)
+        }
+        fn standing(&self, _issuer: &Did, _category: &str, _now: Timestamp) -> IssuerStanding {
+            IssuerStanding {
+                accredited: false,
+                accreditation_required: false,
+            }
+        }
+        fn is_revoked(&self, claim_id: &ClaimId, now: Timestamp) -> bool {
+            matches!(&self.revoked_at, Some((id, t)) if id == claim_id && now >= *t)
+        }
+    }
+
+    #[test]
+    fn revoked_reliance_target_fails_the_dependent_claim() {
+        let issuer = Identity::generate();
+        let subject = Identity::generate();
+        let aud = Identity::generate().did();
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        // A background_check issued in reliance on an identity claim (same issuer for the test).
+        let up = Claim::issue(
+            &issuer,
+            &subject.did(),
+            validity.clone(),
+            emp("Identity Provider"),
+        )
+        .unwrap();
+        let target = ReliesOn {
+            from_claim_id: up.claim_id().clone(),
+            kind: ReliesKind::IdentityBasis,
+        };
+        let bg = Claim::issue_with_reliance(
+            &issuer,
+            &subject.did(),
+            validity,
+            emp("Screening"),
+            &[target],
+        )
+        .unwrap();
+        let d = bg.disclose(&FieldSelector::All).unwrap();
+        let nonce = [7u8; 16];
+        let pres = build_presentation(
+            &subject,
+            &aud,
+            "hire",
+            &nonce,
+            Timestamp(0),
+            Timestamp(100),
+            vec![d],
+        );
+        let vk = issuer.verifying_key();
+
+        // Upstream unrevoked → the dependent claim is accepted.
+        let ok = ReliesAnchor {
+            vk,
+            revoked_at: None,
+        };
+        assert!(
+            verify_presentation(&pres, &aud, Timestamp(50), &ok, false)
+                .unwrap()
+                .accepted
+        );
+
+        // Upstream revoked as of epoch 40; verify at now=50 → the dependent fails closed (H2).
+        let rev = ReliesAnchor {
+            vk,
+            revoked_at: Some((up.claim_id().clone(), Timestamp(40))),
+        };
+        let report = verify_presentation(&pres, &aud, Timestamp(50), &rev, false).unwrap();
+        assert!(!report.accepted);
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.name.contains("reliance intact") && !c.passed));
+
+        // Same revocation, verified BEFORE it (now=30) → still accepted: the verifier's own
+        // epoch decides, never the subject's (H5).
+        assert!(
+            verify_presentation(&pres, &aud, Timestamp(30), &rev, false)
+                .unwrap()
+                .accepted
+        );
+    }
 
     /// A controllable anchor: recognizes one issuer and lets a test dictate accreditation and
     /// revocation independently, so every `fully_valid` branch is reachable here.
