@@ -235,6 +235,15 @@ lamport SOUND, rivest SOUND — the executable-proof hypotheses are now Rust tes
   checked but not its own deeper reliance; the verifier has no signal for deeper reliance, so this
   is not auto-ambered (that would amber almost everything) — it belongs behind a
   "require-full-chain-disclosure" verifier policy knob, not a default.
+- **Own-claim revocation via `status()` (rivest).** The dependent claim's *own* point-wise
+  revocation still uses `is_revoked` (bool), not `status()`, so an unresolvable *own* status would
+  read as not-revoked — the same fail-open class R1 just closed on the reliance path. Inert today
+  (revocation is a Phase-3 stub); when the real registry anchor can return `Unresolvable`, route
+  the own-revocation through `status()` too, for consistency.
+- **Predicates suppress amber (lamport).** A claim blocked *only* on unresolvable reliance is not
+  `fully_valid`, so a predicate over it fails — a hard check — making the report RED, not amber.
+  Fail-closed and consistent with "predicate = narrowing over a fully-valid claim"; noted so a
+  lenient verifier knows predicate use forgoes amber-recoverability.
 - **`kind` opening.** No path yet opens `kind_commit` for the provenance story; `kind` is currently
   always withheld (more private than the N1 floor — fine, but the reverse "why-trustworthy" story
   is unimplemented).
