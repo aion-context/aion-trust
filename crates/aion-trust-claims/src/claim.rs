@@ -182,7 +182,8 @@ impl Claim {
         let master_salt =
             decode_array::<32>(&self.master_salt).map_err(|_| ClaimReject::Malformed)?;
         let leaves = body_leaves(&master_salt, &self.body)?;
-        DisclosedClaim::build(self, &leaves, selector)
+        let reliance = crate::reliance::reliance_leaves(&master_salt, &self.reliance)?;
+        DisclosedClaim::build(self, &leaves, &reliance, selector)
     }
 
     /// Verify this claim against the issuer's trusted key. On success returns a

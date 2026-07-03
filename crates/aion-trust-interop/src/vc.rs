@@ -30,6 +30,10 @@ pub fn export_disclosed_vc(d: &DisclosedClaim, issuer_vk: &VerifyingKey) -> Resu
         .get("fields")
         .and_then(Value::as_array)
         .ok_or(InteropError::WrongType("fields"))?;
+    let reliance = native
+        .get("reliance")
+        .and_then(Value::as_array)
+        .ok_or(InteropError::WrongType("reliance"))?;
 
     let mut subject = serde_json::Map::new();
     subject.insert("id".into(), json!(subject_id));
@@ -50,6 +54,7 @@ pub fn export_disclosed_vc(d: &DisclosedClaim, issuer_vk: &VerifyingKey) -> Resu
         "relianceCount": take(&native, "reliance_count")?,
         "aionSignature": get_str(&native, "issuer_signature")?,
         "disclosures": fields,
+        "relianceDisclosures": reliance,
     });
 
     let mut vc = json!({
@@ -122,6 +127,7 @@ fn rebuild_native(doc: &Value, proof: &Value) -> Result<Value> {
         "reliance_count": take(proof, "relianceCount")?,
         "issuer_signature": get_str(proof, "aionSignature")?,
         "fields": take(proof, "disclosures")?,
+        "reliance": take(proof, "relianceDisclosures")?,
     }))
 }
 

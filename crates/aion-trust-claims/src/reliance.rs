@@ -87,26 +87,60 @@ pub fn empty_reliance_root() -> [u8; 32] {
     crypto::hash(b"aion-trust/reliance-empty/v1")
 }
 
-/// Commit declared reliance as a Merkle root over its per-index, domain-tagged leaves, returning
-/// the root and the leaf count. Zero targets yield the [`empty_reliance_root`] sentinel and count
-/// 0. Both the root and the count are meant to be folded into the issuer signature.
-pub fn reliance_commitment(
+/// A reliance leaf decomposed for commitment and disclosure — the single source of truth, so
+/// issuing and disclosure always hash the same bytes (mirrors [`crate::fields::BodyLeaf`]). The
+/// `kind` is present only as its hiding sub-commitment, so disclosing a leaf need not reveal it.
+pub(crate) struct ReliesLeaf {
+    pub index: u32,
+    pub from_claim_id: ClaimId,
+    pub salt: [u8; 32],
+    pub kind_commit: [u8; 32],
+    pub hash: [u8; 32],
+}
+
+/// Decompose declared reliance into ordered, per-index, domain-tagged leaves under `master_salt`.
+/// Used by both [`reliance_commitment`] (which Merkleizes the hashes) and disclosure (which needs
+/// the salts, `kind` sub-commitments, and audit paths).
+pub(crate) fn reliance_leaves(
     master_salt: &[u8; 32],
     targets: &[ReliesOn],
-) -> Result<([u8; 32], u32), ClaimReject> {
-    let count = u32::try_from(targets.len()).map_err(|_| ClaimReject::Malformed)?;
-    if targets.is_empty() {
-        return Ok((empty_reliance_root(), 0));
-    }
-    let mut hashes = Vec::with_capacity(targets.len());
+) -> Result<Vec<ReliesLeaf>, ClaimReject> {
+    let mut leaves = Vec::with_capacity(targets.len());
     for (i, target) in targets.iter().enumerate() {
         let index = u32::try_from(i).map_err(|_| ClaimReject::Malformed)?;
         let salt = derive_reliance_salt(master_salt, index);
         let kind_salt = derive_kind_salt(master_salt, index);
-        let kc = kind_commit(target.kind, &kind_salt);
-        let id_bytes = target.from_claim_id.as_str().as_bytes();
-        hashes.push(reliance_leaf_hash(index, &salt, id_bytes, &kc));
+        let kind_commit = kind_commit(target.kind, &kind_salt);
+        let hash = reliance_leaf_hash(
+            index,
+            &salt,
+            target.from_claim_id.as_str().as_bytes(),
+            &kind_commit,
+        );
+        leaves.push(ReliesLeaf {
+            index,
+            from_claim_id: target.from_claim_id.clone(),
+            salt,
+            kind_commit,
+            hash,
+        });
     }
+    Ok(leaves)
+}
+
+/// Commit declared reliance as a Merkle root over its leaves, returning the root and the leaf
+/// count. Zero targets yield the [`empty_reliance_root`] sentinel and count 0. Both are meant to
+/// be folded into the issuer signature.
+pub fn reliance_commitment(
+    master_salt: &[u8; 32],
+    targets: &[ReliesOn],
+) -> Result<([u8; 32], u32), ClaimReject> {
+    let leaves = reliance_leaves(master_salt, targets)?;
+    let count = u32::try_from(leaves.len()).map_err(|_| ClaimReject::Malformed)?;
+    if leaves.is_empty() {
+        return Ok((empty_reliance_root(), 0));
+    }
+    let hashes: Vec<[u8; 32]> = leaves.iter().map(|l| l.hash).collect();
     let root = merkle_root(&hashes).map_err(|_| ClaimReject::Malformed)?;
     Ok((root, count))
 }

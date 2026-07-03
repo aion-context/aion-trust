@@ -14,13 +14,14 @@ use std::collections::BTreeMap;
 use aion_context::crypto::VerifyingKey;
 use aion_context::jcs::to_jcs_bytes;
 use aion_trust_core::encoding::{decode_array, to_hex};
-use aion_trust_core::merkle::{self, field_leaf_hash, root_from_path};
+use aion_trust_core::merkle::{self, field_leaf_hash, reliance_leaf_hash, root_from_path};
 use aion_trust_core::{ClaimId, Did, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::bodies::ClaimBody;
 use crate::claim::{signing_bytes, Claim, ClaimCommit, ClaimReject, Validity};
 use crate::fields::BodyLeaf;
+use crate::reliance::ReliesLeaf;
 
 /// Which fields of a claim to disclose. [`FieldSelector::All`] is the claim-level default.
 #[derive(Clone, Debug)]
@@ -42,6 +43,19 @@ pub struct RevealedField {
     pub audit_path: Vec<String>,
 }
 
+/// One disclosed reliance leaf — the relied-upon `claim_id` (always revealed, for the status
+/// check) with its proof against `reliance_root`. `kind` stays hidden behind `kind_commit`.
+/// UNTRUSTED until [`DisclosedClaim::verify`].
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RevealedReliance {
+    pub index: u32,
+    pub from_claim_id: ClaimId,
+    pub salt: String,
+    pub kind_commit: String,
+    /// Sibling hashes from the leaf to `reliance_root`, innermost first (hex).
+    pub audit_path: Vec<String>,
+}
+
 /// The artifact a subject discloses: signed scalars + the committed root, plus a proof for
 /// each revealed field. It carries **no body** — undisclosed fields appear nowhere.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -60,6 +74,9 @@ pub struct DisclosedClaim {
     pub reliance_count: u32,
     pub issuer_signature: String,
     fields: Vec<RevealedField>,
+    /// The full committed reliance set, disclosed (a subject cannot omit one — `reliance_count`
+    /// pins it). `from_claim_id` is revealed; `kind` stays behind its sub-commitment.
+    reliance: Vec<RevealedReliance>,
 }
 
 /// A field whose disclosure has been cryptographically proven. `Value` is the only case today;
@@ -81,6 +98,9 @@ pub struct VerifiedDisclosure {
     validity: Validity,
     category: String,
     fields: BTreeMap<String, ProvenField>,
+    /// The relied-upon claim_ids, each proven against the signed `reliance_root`. The verifier's
+    /// dependency-revocation (fifth) check reads these; empty when the claim declared no reliance.
+    reliance: Vec<ClaimId>,
 }
 
 impl DisclosedClaim {
@@ -90,6 +110,7 @@ impl DisclosedClaim {
     pub(crate) fn build(
         claim: &Claim,
         leaves: &[BodyLeaf],
+        reliance_leaves: &[ReliesLeaf],
         selector: &FieldSelector,
     ) -> Result<DisclosedClaim, ClaimReject> {
         let indices = selected_indices(leaves, selector)?;
@@ -106,6 +127,7 @@ impl DisclosedClaim {
                 audit_path: path.iter().map(|h| to_hex(h)).collect(),
             });
         }
+        let reliance = disclose_reliance(reliance_leaves)?;
         Ok(DisclosedClaim {
             claim_id: claim.claim_id.clone(),
             subject_id: claim.subject_id.clone(),
@@ -119,6 +141,7 @@ impl DisclosedClaim {
             reliance_count: claim.reliance_count,
             issuer_signature: claim.issuer_signature.clone(),
             fields,
+            reliance,
         })
     }
 
@@ -168,6 +191,7 @@ impl DisclosedClaim {
                 return Err(ClaimReject::MissingField);
             }
         }
+        let reliance = self.verify_reliance()?;
         Ok(VerifiedDisclosure {
             claim_id: self.claim_id.clone(),
             subject_id: self.subject_id.clone(),
@@ -175,7 +199,49 @@ impl DisclosedClaim {
             validity: self.validity.clone(),
             category: self.category.clone(),
             fields: proven,
+            reliance,
         })
+    }
+
+    /// Recompute every disclosed reliance leaf against the signed `reliance_root`, requiring
+    /// **exactly** `reliance_count` leaves at indices `0..count-1`. A stripped, duplicated, or
+    /// added target is caught (omission detection over the reliance set), mirroring how
+    /// `field_count` pins the body's field set. Returns the relied-upon claim_ids.
+    fn verify_reliance(&self) -> Result<Vec<ClaimId>, ClaimReject> {
+        let count = usize::try_from(self.reliance_count).map_err(|_| ClaimReject::Malformed)?;
+        if self.reliance.len() != count {
+            return Err(ClaimReject::ReliesTampered);
+        }
+        if count == 0 {
+            return Ok(Vec::new());
+        }
+        let root = decode_array::<32>(&self.reliance_root).map_err(|_| ClaimReject::Malformed)?;
+        let mut seen = vec![false; count];
+        let mut ids = Vec::with_capacity(count);
+        for r in &self.reliance {
+            let idx = usize::try_from(r.index).map_err(|_| ClaimReject::Malformed)?;
+            if idx >= count || seen[idx] {
+                return Err(ClaimReject::ReliesTampered);
+            }
+            seen[idx] = true;
+            let salt = decode_array::<32>(&r.salt).map_err(|_| ClaimReject::Malformed)?;
+            let kind_commit =
+                decode_array::<32>(&r.kind_commit).map_err(|_| ClaimReject::Malformed)?;
+            let leaf = reliance_leaf_hash(
+                r.index,
+                &salt,
+                r.from_claim_id.as_str().as_bytes(),
+                &kind_commit,
+            );
+            let path = decode_path(&r.audit_path)?;
+            let got =
+                root_from_path(leaf, idx, count, &path).map_err(|_| ClaimReject::ReliesTampered)?;
+            if got != root {
+                return Err(ClaimReject::ReliesTampered);
+            }
+            ids.push(r.from_claim_id.clone());
+        }
+        Ok(ids)
     }
 
     /// Check the issuer key, reconstruct the signed message from the signed scalars (no body
@@ -267,6 +333,33 @@ impl VerifiedDisclosure {
     pub fn revealed_keys(&self) -> impl Iterator<Item = &str> {
         self.fields.keys().map(String::as_str)
     }
+    /// The relied-upon claim_ids, proven against the signed `reliance_root`. The verifier's
+    /// dependency-revocation check reads these to look up each upstream claim's status.
+    pub fn reliance(&self) -> &[ClaimId] {
+        &self.reliance
+    }
+}
+
+/// Build the disclosed reliance leaves — all of them, since `reliance_count` forbids omission —
+/// each with its audit path against `reliance_root`.
+fn disclose_reliance(leaves: &[ReliesLeaf]) -> Result<Vec<RevealedReliance>, ClaimReject> {
+    if leaves.is_empty() {
+        return Ok(Vec::new());
+    }
+    let hashes: Vec<[u8; 32]> = leaves.iter().map(|l| l.hash).collect();
+    let mut out = Vec::with_capacity(leaves.len());
+    for l in leaves {
+        let pos = usize::try_from(l.index).map_err(|_| ClaimReject::Malformed)?;
+        let path = merkle::audit_path(&hashes, pos).map_err(|_| ClaimReject::Malformed)?;
+        out.push(RevealedReliance {
+            index: l.index,
+            from_claim_id: l.from_claim_id.clone(),
+            salt: to_hex(&l.salt),
+            kind_commit: to_hex(&l.kind_commit),
+            audit_path: path.iter().map(|h| to_hex(h)).collect(),
+        });
+    }
+    Ok(out)
 }
 
 /// Resolve a selector to a list of leaf indices, erroring on an empty or unknown selection.
@@ -305,6 +398,7 @@ fn decode_path(hexes: &[String]) -> Result<Vec<[u8; 32]>, ClaimReject> {
 mod tests {
     use super::*;
     use crate::bodies::EmploymentBody;
+    use crate::reliance::{ReliesKind, ReliesOn};
     use aion_context::crypto::VerifyingKey;
     use aion_trust_core::Identity;
 
@@ -326,6 +420,78 @@ mod tests {
         };
         let claim = Claim::issue(&issuer, &subject, validity, body).unwrap();
         (issuer, vk, claim)
+    }
+
+    /// A claim issued in reliance on one upstream claim.
+    fn issue_relied() -> (Identity, VerifyingKey, Claim) {
+        let (_, _, upstream) = issue();
+        let issuer = Identity::generate();
+        let vk = issuer.verifying_key();
+        let subject = Identity::generate().did();
+        let body = ClaimBody::Employment(EmploymentBody {
+            employer: "Screening".into(),
+            title: "clear".into(),
+            employment_type: "full_time".into(),
+            start: "2021".into(),
+            end: None,
+            rehire_eligible: false,
+        });
+        let validity = Validity {
+            from: Timestamp(0),
+            until: None,
+        };
+        let target = ReliesOn {
+            from_claim_id: upstream.claim_id().clone(),
+            kind: ReliesKind::IdentityBasis,
+        };
+        let claim =
+            Claim::issue_with_reliance(&issuer, &subject, validity, body, &[target]).unwrap();
+        (issuer, vk, claim)
+    }
+
+    #[test]
+    fn disclosed_reliance_verifies_and_exposes_targets() {
+        let (_, vk, claim) = issue_relied();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let verified = d.verify(&vk).expect("verify");
+        assert_eq!(verified.reliance().len(), 1);
+    }
+
+    #[test]
+    fn no_reliance_disclosure_has_empty_reliance() {
+        let (_, vk, claim) = issue();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let verified = d.verify(&vk).expect("verify");
+        assert!(verified.reliance().is_empty());
+    }
+
+    #[test]
+    fn h1_omitted_reliance_leaf_is_rejected() {
+        // Drop the disclosed reliance leaf while reliance_count stays 1 — omission detection over
+        // the reliance set, the analogue of a maliciously withheld body field.
+        let (_, vk, claim) = issue_relied();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let mut v = serde_json::to_value(&d).unwrap();
+        v["reliance"] = serde_json::json!([]);
+        let tampered: DisclosedClaim = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            tampered.verify(&vk).err(),
+            Some(ClaimReject::ReliesTampered)
+        );
+    }
+
+    #[test]
+    fn tampered_reliance_target_is_rejected() {
+        // Swap the disclosed from_claim_id — the leaf no longer recomputes the signed reliance_root.
+        let (_, vk, claim) = issue_relied();
+        let d = claim.disclose(&FieldSelector::All).unwrap();
+        let mut v = serde_json::to_value(&d).unwrap();
+        v["reliance"][0]["from_claim_id"] = serde_json::json!("blake3:deadbeef");
+        let tampered: DisclosedClaim = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            tampered.verify(&vk).err(),
+            Some(ClaimReject::ReliesTampered)
+        );
     }
 
     #[test]
