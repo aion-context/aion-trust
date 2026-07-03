@@ -17,7 +17,7 @@ pub mod predicate;
 pub mod presentation;
 pub mod reliance;
 
-pub use anchor::{IssuerStanding, TrustAnchor};
+pub use anchor::{ClaimStatus, IssuerStanding, TrustAnchor};
 pub use bodies::{
     BackgroundCheckBody, CertificationBody, ClaimBody, EducationBody, EmploymentBody, IdentityBody,
     ReferenceBody, SkillBody,

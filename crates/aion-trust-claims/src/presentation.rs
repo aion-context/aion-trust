@@ -14,7 +14,7 @@ use aion_trust_core::identity::verifying_key_from_hex;
 use aion_trust_core::{ClaimId, Did, Identity, Result, Timestamp};
 use serde::{Deserialize, Serialize};
 
-use crate::anchor::{IssuerStanding, TrustAnchor};
+use crate::anchor::{ClaimStatus, IssuerStanding, TrustAnchor};
 use crate::disclosure::{DisclosedClaim, VerifiedDisclosure};
 use crate::predicate::{evaluate, PredicateRequest};
 
@@ -359,13 +359,15 @@ fn authenticated_claim_checks(
     // (disclosed and proven against reliance_root in `verified`) must itself be unrevoked as of
     // the verifier's `now`. A revoked basis fails the dependent claim closed — transitive
     // revocation, offline, at one verifier-chosen epoch (a strict-policy verifier; an amber policy
-    // would flag instead). A status-only target (revealed as a claim_id, not itself disclosed as a
-    // full claim) has its *revocation* checked but not its own deeper reliance — clean here is the
-    // revocation-only floor, not full transitive assurance. See `docs/DEPENDENCY-TRUST.md`.
+    // would flag instead). Every relied-upon claim must be `Live`: a `Revoked` OR `Unresolvable`
+    // upstream fails the dependent claim closed — an anchor that cannot resolve a target's status
+    // must not be read as "live" (the fail-open hole). A status-only target (revealed as a
+    // claim_id, not itself disclosed as a full claim) has its *revocation* checked but not its own
+    // deeper reliance — clean here is the revocation-only floor. See `docs/DEPENDENCY-TRUST.md`.
     let reliance_ok = verified
         .reliance()
         .iter()
-        .all(|dep| !anchor.is_revoked(dep, now));
+        .all(|dep| anchor.status(dep, now) == ClaimStatus::Live);
     check(
         checks,
         "reliance intact (no relied-upon claim revoked)",
@@ -483,6 +485,7 @@ mod tests {
     struct ReliesAnchor {
         vk: VerifyingKey,
         revoked_at: Option<(ClaimId, Timestamp)>,
+        unresolvable: Option<ClaimId>,
     }
 
     impl TrustAnchor for ReliesAnchor {
@@ -498,10 +501,20 @@ mod tests {
         fn is_revoked(&self, claim_id: &ClaimId, now: Timestamp) -> bool {
             matches!(&self.revoked_at, Some((id, t)) if id == claim_id && now >= *t)
         }
+        fn status(&self, claim_id: &ClaimId, now: Timestamp) -> ClaimStatus {
+            if self.unresolvable.as_ref() == Some(claim_id) {
+                ClaimStatus::Unresolvable
+            } else if self.is_revoked(claim_id, now) {
+                ClaimStatus::Revoked
+            } else {
+                ClaimStatus::Live
+            }
+        }
     }
 
-    #[test]
-    fn revoked_reliance_target_fails_the_dependent_claim() {
+    /// A background_check presented in reliance on one identity claim (same issuer). Returns the
+    /// issuer key, the audience, the upstream claim_id, and the presentation.
+    fn relied() -> (VerifyingKey, Did, ClaimId, Presentation) {
         let issuer = Identity::generate();
         let subject = Identity::generate();
         let aud = Identity::generate().did();
@@ -509,7 +522,6 @@ mod tests {
             from: Timestamp(0),
             until: None,
         };
-        // A background_check issued in reliance on an identity claim (same issuer for the test).
         let up = Claim::issue(
             &issuer,
             &subject.did(),
@@ -530,22 +542,34 @@ mod tests {
         )
         .unwrap();
         let d = bg.disclose(&FieldSelector::All).unwrap();
-        let nonce = [7u8; 16];
         let pres = build_presentation(
             &subject,
             &aud,
             "hire",
-            &nonce,
+            &[7u8; 16],
             Timestamp(0),
             Timestamp(100),
             vec![d],
         );
-        let vk = issuer.verifying_key();
+        (issuer.verifying_key(), aud, up.claim_id().clone(), pres)
+    }
+
+    fn reliance_failed(report: &VerificationReport) -> bool {
+        report
+            .checks
+            .iter()
+            .any(|c| c.name.contains("reliance intact") && !c.passed)
+    }
+
+    #[test]
+    fn revoked_reliance_target_fails_the_dependent_claim() {
+        let (vk, aud, up_id, pres) = relied();
 
         // Upstream unrevoked → the dependent claim is accepted.
         let ok = ReliesAnchor {
             vk,
             revoked_at: None,
+            unresolvable: None,
         };
         assert!(
             verify_presentation(&pres, &aud, Timestamp(50), &ok, false)
@@ -556,22 +580,35 @@ mod tests {
         // Upstream revoked as of epoch 40; verify at now=50 → the dependent fails closed (H2).
         let rev = ReliesAnchor {
             vk,
-            revoked_at: Some((up.claim_id().clone(), Timestamp(40))),
+            revoked_at: Some((up_id.clone(), Timestamp(40))),
+            unresolvable: None,
         };
         let report = verify_presentation(&pres, &aud, Timestamp(50), &rev, false).unwrap();
         assert!(!report.accepted);
-        assert!(report
-            .checks
-            .iter()
-            .any(|c| c.name.contains("reliance intact") && !c.passed));
+        assert!(reliance_failed(&report));
 
-        // Same revocation, verified BEFORE it (now=30) → still accepted: the verifier's own
-        // epoch decides, never the subject's (H5).
+        // Same revocation, verified BEFORE it (now=30) → still accepted: the verifier's own epoch
+        // decides, never the subject's (H5).
         assert!(
             verify_presentation(&pres, &aud, Timestamp(30), &rev, false)
                 .unwrap()
                 .accepted
         );
+    }
+
+    #[test]
+    fn unresolvable_reliance_target_fails_closed() {
+        // rivest R1: an anchor that cannot resolve a relied-upon claim's status must NOT read as
+        // "not revoked = live". Unresolvable fails the dependent claim closed — no fail-open.
+        let (vk, aud, up_id, pres) = relied();
+        let anchor = ReliesAnchor {
+            vk,
+            revoked_at: None,
+            unresolvable: Some(up_id),
+        };
+        let report = verify_presentation(&pres, &aud, Timestamp(50), &anchor, false).unwrap();
+        assert!(!report.accepted);
+        assert!(reliance_failed(&report));
     }
 
     /// A controllable anchor: recognizes one issuer and lets a test dictate accreditation and
