@@ -199,6 +199,14 @@ sub-commitment; the reliance commitment carried in the DisclosedClaim and in eve
 enumeration (`DATA-MODEL.md`, `ARCHITECTURE.md`); and salted/hiding `claim_id` promoted to a hard
 prerequisite. A third confirming pass and `/gate` are advised before any implementation lands.
 
+**Executable proof.** [`proofs/phase7_reliance_proof.py`](proofs/phase7_reliance_proof.py) turns
+each panel finding into a runnable hypothesis — omission-detection, transitive fail-closed,
+injection/strip rejection, verifier-controlled `e_v`, no ledger topology, leaf index-binding,
+hiding `claim_id`, `kind` minimization — and all **11/11 pass**. It models the mechanism with
+domain-separated BLAKE2b + a Merkle commitment and an HMAC stand-in for the issuer signature, so it
+proves the design *logic*, not the shipped crypto. These hypotheses are the spec to port to Rust
+tests (real Ed25519/BLAKE3, under the `cargo mutants` gate) when Phase 7 is implemented.
+
 ## Status
 
 **Phase 7 — proposed (design).** No code. `reliance_root`/`reliance_count` would extend the
