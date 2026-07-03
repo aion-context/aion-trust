@@ -34,7 +34,12 @@ Every fact is a claim: an issuer's signed attestation about a subject.
   "master_salt": "blake3:…",            // 32-byte per-claim secret; per-field salts derive from it
   "body_root": "blake3:…",              // Merkle root over the body's salted field leaves
   "field_count": 6,                     // number of field leaves; signed, pins the tree shape
-  "issuer_signature": "ed25519:…"       // issuer signs {subject_id,type,schema_id,body_root,field_count,validity,claim_id}
+  "reliance_root": "blake3:…",          // MANDATORY & signed. Merkle root over per-index tagged reliance leaves.
+                                        //   leaf_i = H("aion-trust/reliance-leaf/v1" ‖ i ‖ salt_i ‖ from_claim_id ‖ kind_commit)
+                                        //   salt_i derived per-index from master_salt; kind_commit is a separate salted sub-commit.
+  "reliance_count": 0,                  // MANDATORY & signed. 0 (with reliance_root = the fixed EMPTY_ROOT sentinel) = "no reliance
+                                        //   declared" — a SIGNED statement, never "absent". Reliance presence is pinned by schema_id version.
+  "issuer_signature": "ed25519:…"       // issuer signs H("aion-trust/claim/v1" ‖ CANON{subject_id,type,schema_id,body_root,field_count,reliance_root,reliance_count,validity,claim_id})
 }
 ```
 
@@ -119,12 +124,21 @@ submitted.**
       "claim_id": "blake3:…", "subject_id": "did:aion:7Hx…", "issuer_id": "did:aion:Uni…",
       "category": "education", "schema_id": "aion-trust/education/v1",
       "validity": { "from": "2020-05-20", "until": null },
-      "body_root": "blake3:…", "field_count": 5, "issuer_signature": "ed25519:…",
+      "body_root": "blake3:…", "field_count": 5,
+      "reliance_root": "blake3:…", "reliance_count": 0,   // always present; part of the signed set
+      "issuer_signature": "ed25519:…",
       "fields": [                       // only the disclosed fields, each with a Merkle proof
         { "key": "institution", "index": 4, "salt": "…", "value": "State University",
           "audit_path": ["blake3:…","blake3:…"] },
         { "key": "credential",  "index": 2, "salt": "…", "value": "B.S. Computer Science",
           "audit_path": ["blake3:…","blake3:…"] }
+      ],
+      "reliance": [                     // present only when reliance_count > 0; ALL indices 0..count-1 required
+        { "index": 0, "from_claim_id": "blake3:…",   // the relied-upon claim (always disclosed to enable the status check)
+          "salt": "…", "audit_path": ["blake3:…"],   // leaf = H("aion-trust/reliance-leaf/v1" ‖ index ‖ salt ‖ from_claim_id ‖ kind_commit)
+          "kind_commit": "blake3:…",                 // separately-salted sub-commitment; the label stays hidden…
+          "kind": "identity_basis", "kind_salt": "…" //   …unless the subject opens it for the provenance story (both optional)
+        }
       ]
     }
   ],
@@ -134,11 +148,16 @@ submitted.**
 
 The verifier checks, in order: presentation binding (subject key, audience, expiry, nonce
 freshness + length, subject signature); then per claim — subject match, issuer recognized,
-issuer signature over the reconstructed `{…,body_root,field_count,…}`, and **each disclosed
-field's leaf recomputing the signed `body_root` via its audit path** (with the field's key
-matching the schema field at its index, and `field_count` matching the schema's field set so an
-omitted field is visible); then issuer accreditation and revocation. Optional **predicates** are
-evaluated last, only over claims that passed every check. See
+issuer signature over the reconstructed `{…,body_root,field_count,reliance_root,reliance_count,…}`
+(reliance fields **always** included — `reliance_count` is signed even when 0, so "no reliance"
+cannot be forged or stripped), and **each disclosed field's leaf recomputing the signed
+`body_root` via its audit path** (with the field's key matching the schema field at its index, and
+`field_count` matching the schema's field set so an omitted field is visible); then issuer
+accreditation and revocation; then the **fifth check** — each disclosed reliance leaf recomputes
+the signed `reliance_root`, `reliance_count` fixes the set so an omitted target is visible, and
+each target's ledger status (as-of the verifier's pinned epoch) must not be `revoked`
+([`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md)). Optional **predicates** are evaluated last, only
+over claims that passed every check, reliance included. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md#verification-flow).
 
 ## Ledger records (the only things on aion-context)
@@ -158,3 +177,10 @@ No PII. Ever.
 { "claim_id": "blake3:…", "status": "issued", "epoch": 12 }
 { "claim_id": "blake3:…", "status": "revoked", "epoch": 19 }
 ```
+
+> **Reliance is *not* a ledger record.** Dependency-aware trust
+> ([`DEPENDENCY-TRUST.md`](DEPENDENCY-TRUST.md)) commits a claim's reliance set **inside the
+> issuer-signed claim** (`reliance_root` + `reliance_count`, below) and discloses it in a
+> Presentation — never on the shared ledger. A first draft put a `claim_id → claim_id` edge on
+> the ledger; the review panel rejected it (it would break complete mediation and erasure). The
+> ledger keeps holding only keys, accreditation, schemas, and point-wise status.
