@@ -23,6 +23,11 @@ pub const PRES_DOMAIN: &[u8] = b"aion-trust/presentation/v1";
 /// Minimum nonce length the verifier accepts (128-bit anti-replay).
 const MIN_NONCE_LEN: usize = 16;
 
+/// The amber (soft) reliance check: a relied-upon claim whose status is *unresolvable*. Its
+/// failure blocks strict `accepted` but is recoverable under a lenient (amber) policy — so a
+/// report whose only failing check is this one is `amber`.
+const RELIANCE_RESOLVABLE_CHECK: &str = "reliance resolvable (relied-upon status known)";
+
 /// A subject-signed bundle presented to one verifier. Self-authenticating: it carries the
 /// subject's public key, which must derive the stated `subject_id`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -133,7 +138,13 @@ pub struct Check {
 #[derive(Clone, Debug, Serialize)]
 #[must_use = "the `accepted` verdict must be inspected; dropping a report ignores the result"]
 pub struct VerificationReport {
+    /// Strict verdict: every check passed. A revoked **or** unresolvable relied-upon claim fails
+    /// this (dependency-aware revocation never fails open).
     pub accepted: bool,
+    /// Amber (lenient-recoverable): not strictly `accepted`, but the *only* blocking failures are
+    /// unresolvable-reliance concerns — no hard failure. A lenient verifier may accept on
+    /// `accepted || amber`; a strict verifier uses `accepted` alone.
+    pub amber: bool,
     pub checks: Vec<Check>,
 }
 
@@ -240,7 +251,17 @@ pub fn verify_presentation_with_predicates(
     evaluate_predicates(&mut checks, predicates, &outcomes);
 
     let accepted = checks.iter().all(|c| c.passed);
-    Ok(VerificationReport { accepted, checks })
+    // Amber: not strictly accepted, but every failing check is the soft "reliance resolvable" one.
+    let amber = !accepted
+        && checks
+            .iter()
+            .filter(|c| !c.passed)
+            .all(|c| c.name == RELIANCE_RESOLVABLE_CHECK);
+    Ok(VerificationReport {
+        accepted,
+        amber,
+        checks,
+    })
 }
 
 /// A claim that authenticated, with whether it passed *every* trust check (validity,
@@ -356,25 +377,38 @@ fn authenticated_claim_checks(
     let not_revoked = !anchor.is_revoked(claim.claim_id(), now);
     check(checks, "claim not revoked", not_revoked, id);
     // Fifth check — dependency-aware revocation. Every claim this one was issued *in reliance on*
-    // (disclosed and proven against reliance_root in `verified`) must itself be unrevoked as of
-    // the verifier's `now`. A revoked basis fails the dependent claim closed — transitive
-    // revocation, offline, at one verifier-chosen epoch (a strict-policy verifier; an amber policy
-    // would flag instead). Every relied-upon claim must be `Live`: a `Revoked` OR `Unresolvable`
-    // upstream fails the dependent claim closed — an anchor that cannot resolve a target's status
-    // must not be read as "live" (the fail-open hole). A status-only target (revealed as a
-    // claim_id, not itself disclosed as a full claim) has its *revocation* checked but not its own
-    // deeper reliance — clean here is the revocation-only floor. See `docs/DEPENDENCY-TRUST.md`.
-    let reliance_ok = verified
-        .reliance()
-        .iter()
-        .all(|dep| anchor.status(dep, now) == ClaimStatus::Live);
-    check(
-        checks,
-        "reliance intact (no relied-upon claim revoked)",
-        reliance_ok,
-        format!("{} relied-upon claim(s)", verified.reliance().len()),
-    );
-    within && accredited_ok && not_revoked && reliance_ok
+    // (disclosed and proven against reliance_root in `verified`) must itself be `Live` as of the
+    // verifier's `now`, split by severity: a `Revoked` upstream is a hard failure (RED); an
+    // `Unresolvable` one — an anchor that cannot determine the status — is an AMBER concern
+    // (recoverable under a lenient policy). Both fail strict `accepted` (never fail-open); the
+    // amber signal lets a lenient verifier accept a presentation blocked only on unresolved
+    // reliance. A status-only target has its *revocation* checked but not its own deeper reliance
+    // (the revocation-only floor). See `docs/DEPENDENCY-TRUST.md`.
+    let mut revoked_dep = false;
+    let mut unresolved_dep = false;
+    for dep in verified.reliance() {
+        match anchor.status(dep, now) {
+            ClaimStatus::Live => {}
+            ClaimStatus::Revoked => revoked_dep = true,
+            ClaimStatus::Unresolvable => unresolved_dep = true,
+        }
+    }
+    if !verified.reliance().is_empty() {
+        let n = verified.reliance().len();
+        check(
+            checks,
+            "reliance intact (no relied-upon claim revoked)",
+            !revoked_dep,
+            format!("{n} relied-upon claim(s)"),
+        );
+        check(
+            checks,
+            RELIANCE_RESOLVABLE_CHECK,
+            !unresolved_dep,
+            format!("{n} relied-upon claim(s)"),
+        );
+    }
+    within && accredited_ok && not_revoked && !revoked_dep && !unresolved_dep
 }
 
 fn decode_nonce(nonce_hex: &str) -> Result<Vec<u8>> {
@@ -585,6 +619,10 @@ mod tests {
         };
         let report = verify_presentation(&pres, &aud, Timestamp(50), &rev, false).unwrap();
         assert!(!report.accepted);
+        assert!(
+            !report.amber,
+            "a revoked basis is a hard RED failure, not amber"
+        );
         assert!(reliance_failed(&report));
 
         // Same revocation, verified BEFORE it (now=30) → still accepted: the verifier's own epoch
@@ -597,9 +635,10 @@ mod tests {
     }
 
     #[test]
-    fn unresolvable_reliance_target_fails_closed() {
-        // rivest R1: an anchor that cannot resolve a relied-upon claim's status must NOT read as
-        // "not revoked = live". Unresolvable fails the dependent claim closed — no fail-open.
+    fn unresolvable_reliance_target_is_amber_not_strictly_accepted() {
+        // rivest R1/R2: an anchor that cannot resolve a relied-upon claim's status must NOT read as
+        // "live" (no fail-open). It fails STRICT acceptance but is AMBER — a lenient verifier may
+        // accept on `accepted || amber`.
         let (vk, aud, up_id, pres) = relied();
         let anchor = ReliesAnchor {
             vk,
@@ -607,8 +646,14 @@ mod tests {
             unresolvable: Some(up_id),
         };
         let report = verify_presentation(&pres, &aud, Timestamp(50), &anchor, false).unwrap();
-        assert!(!report.accepted);
-        assert!(reliance_failed(&report));
+        assert!(!report.accepted); // strict verifier rejects — never fail-open
+        assert!(report.amber); // …but lenient may accept on accepted || amber
+                               // the soft "reliance resolvable" check failed; the hard "reliance intact" one did not
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.name.contains("resolvable") && !c.passed));
+        assert!(!reliance_failed(&report));
     }
 
     /// A controllable anchor: recognizes one issuer and lets a test dictate accreditation and
