@@ -217,16 +217,33 @@ VC interop carrying the commitment. Re-reviewed by the panel on the **code**: sa
 lamport SOUND, rivest SOUND — the executable-proof hypotheses are now Rust tests under the
 `cargo mutants` 0-survivor gate.
 
-**Scoped follow-ups (Phase 3, when revocation is fully wired against aion-context):**
+**Phase 7b — DONE (tri-state status + amber verdict):**
 
-- **Tri-state upstream status (rivest R1).** `TrustAnchor::is_revoked` returns `bool`, so an
-  *unresolvable* upstream status resolves to "not revoked" (fail-open). Today this is inert —
-  revocation is a Phase-3 stub. When it is wired, the anchor needs an `Unresolvable` state and the
-  fifth check must treat it as fail-closed/amber, per the boundary rule above.
-- **Amber / undisclosed-deeper (lamport, rivest R2).** Only the strict fail-closed policy is
-  implemented (binary `accepted`). The *amber* verdict — and the "undisclosed-deeper reliance ⇒
-  at-least-amber" signal for a status-only target — is not yet surfaced; a status-only target has
-  its revocation checked but not its own deeper reliance (the documented revocation-only floor).
+- **Tri-state upstream status (rivest R1) — DONE.** `TrustAnchor` gains `ClaimStatus { Live,
+  Revoked, Unresolvable }` and a `status()` method that *defaults* to deriving from `is_revoked`
+  (so existing anchors are unchanged). The fifth check requires each relied-upon claim to be
+  `Live`: a `Revoked` **or** `Unresolvable` upstream fails strict `accepted` — no fail-open. An
+  anchor that cannot resolve a target's status overrides `status()` to return `Unresolvable`.
+- **Amber verdict (lamport, rivest R2) — DONE (non-breaking).** `VerificationReport` keeps
+  `accepted: bool` and adds `amber: bool`: `Revoked` is a hard RED failure (`accepted=false,
+  amber=false`); `Unresolvable` is an AMBER concern (`accepted=false, amber=true`) — a strict
+  verifier uses `accepted`, a lenient one may accept on `accepted || amber`.
+
+**Still open:**
+
+- **Undisclosed-deeper amber for status-only targets.** A status-only target has its *revocation*
+  checked but not its own deeper reliance; the verifier has no signal for deeper reliance, so this
+  is not auto-ambered (that would amber almost everything) — it belongs behind a
+  "require-full-chain-disclosure" verifier policy knob, not a default.
+- **Own-claim revocation via `status()` (rivest).** The dependent claim's *own* point-wise
+  revocation still uses `is_revoked` (bool), not `status()`, so an unresolvable *own* status would
+  read as not-revoked — the same fail-open class R1 just closed on the reliance path. Inert today
+  (revocation is a Phase-3 stub); when the real registry anchor can return `Unresolvable`, route
+  the own-revocation through `status()` too, for consistency.
+- **Predicates suppress amber (lamport).** A claim blocked *only* on unresolvable reliance is not
+  `fully_valid`, so a predicate over it fails — a hard check — making the report RED, not amber.
+  Fail-closed and consistent with "predicate = narrowing over a fully-valid claim"; noted so a
+  lenient verifier knows predicate use forgoes amber-recoverability.
 - **`kind` opening.** No path yet opens `kind_commit` for the provenance story; `kind` is currently
   always withheld (more private than the N1 floor — fine, but the reverse "why-trustworthy" story
   is unimplemented).
